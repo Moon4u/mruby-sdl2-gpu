@@ -20,7 +20,6 @@
 #include "glew/GL/glew.h"
 
 
-
 // modules in mruby
 struct RClass *mod_GPU               = NULL;
 
@@ -1920,7 +1919,6 @@ mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
 
 static mrb_value
 mrb_sdl2_gpu_test(mrb_state *mrb, mrb_value self) {
-  glutInitDisplayMode(GLUT_RGB);
   int i = glewInit();
   printf("gosho = %d", i);
   return mrb_fixnum_value(i);
