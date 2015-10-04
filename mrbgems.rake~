@@ -1,7 +1,0 @@
-MRuby::Gem::Specification.new('mruby-sdl2-gpu') do |spec|
-  spec.license = 'MIT'
-  spec.authors = 'crimsonwoods'
-
-  spec.cc.flags << '-I/usr/local/lib/include/'
-  spec.linker.flags_before_libraries << '-L/usr/local/lib/lib -lSDL2_gpu'
-end
