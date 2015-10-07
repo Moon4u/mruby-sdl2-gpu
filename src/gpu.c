@@ -7,9 +7,10 @@
 
 // mruby related includes
 #include "mruby.h"
-#include "mruby/class.h"
 #include "mruby/data.h"
-#include "mruby/value.h"
+#include "mruby/class.h"
+//#include "mruby/value.h"
+#include "mruby/variable.h"
 #include "mruby/array.h"
 #include "mruby/string.h"
 
@@ -17,12 +18,11 @@
 #include "sdl2_surface.h"
 #include "sdl2_render.h"
 #include <SDL/SDL_gpu.h>
+
 #include "glew/GL/glew.h"
+#include "gpu.h"
 
-
-// modules in mruby
-struct RClass *mod_GPU               = NULL;
-
+struct RClass *mod_GPU                              = NULL;
 // classes in mruby
 struct RClass *class_Target          = NULL;
 struct RClass *class_RendererID      = NULL;
@@ -30,8 +30,8 @@ struct RClass *class_Renderer        = NULL;
 struct RClass *class_Context         = NULL;
 struct RClass *class_Camera          = NULL;
 struct RClass *class_BlendMode       = NULL;
-struct RClass *class_Image           = NULL;
 struct RClass *class_Rect            = NULL;
+struct RClass *class_Image           = NULL;
 struct RClass *class_MatrixStack     = NULL;
 
 /*********************************
@@ -74,7 +74,7 @@ mrb_sdl2_gpu_target(mrb_state *mrb, GPU_Target *target)
 {
   mrb_sdl2_gpu_target_data_t *data =
     (mrb_sdl2_gpu_target_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_target_data_t));
-  if (NULL != data) {
+  if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->target = target;
@@ -136,7 +136,7 @@ mrb_sdl2_gpu_matrixstack(mrb_state *mrb, GPU_MatrixStack matrixstack)
  *********************************/
 
 typedef struct mrb_sdl2_gpu_rect_data_t {
-  GPU_Rect *rect;
+  GPU_Rect rect;
 } mrb_sdl2_gpu_rect_data_t;
 
 static void
@@ -162,12 +162,11 @@ mrb_sdl2_gpu_rect_get_ptr(mrb_state *mrb, mrb_value rect)
   }
   data =
     (mrb_sdl2_gpu_rect_data_t*)mrb_data_get_ptr(mrb, rect, &mrb_sdl2_gpu_rect_data_type);
-  return data->rect;
+  return &data->rect;
 }
 
-
 mrb_value
-mrb_sdl2_gpu_rect(mrb_state *mrb, GPU_Rect *rect)
+mrb_sdl2_gpu_rect(mrb_state *mrb, GPU_Rect rect)
 {
   mrb_sdl2_gpu_rect_data_t *data =
     (mrb_sdl2_gpu_rect_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
@@ -214,7 +213,6 @@ mrb_sdl2_gpu_image_get_ptr(mrb_state *mrb, mrb_value image)
     (mrb_sdl2_gpu_image_data_t*)mrb_data_get_ptr(mrb, image, &mrb_sdl2_gpu_image_data_type);
   return data->image;
 }
-
 
 mrb_value
 mrb_sdl2_gpu_image(mrb_state *mrb, GPU_Image *image)
@@ -263,7 +261,6 @@ mrb_sdl2_gpu_blendmode_get_ptr(mrb_state *mrb, mrb_value blendmode)
     (mrb_sdl2_gpu_blendmode_data_t*)mrb_data_get_ptr(mrb, blendmode, &mrb_sdl2_gpu_blendmode_data_type);
   return data->blendmode;
 }
-
 
 mrb_value
 mrb_sdl2_gpu_blendmode(mrb_state *mrb, GPU_BlendMode *blendmode)
@@ -963,7 +960,7 @@ mrb_sdl2_gpu_make_rect(mrb_state *mrb, mrb_value self)
   mrb_float x, y, w, h;
   mrb_get_args(mrb, "ffff", &x, &y, &w, &h);
   r = GPU_MakeRect(x, y, w, h);
-  return mrb_sdl2_gpu_rect(mrb, &r);
+  return mrb_sdl2_gpu_rect(mrb, r);
 }
 
 static mrb_value
@@ -1055,7 +1052,7 @@ mrb_sdl2_gpu_target_set_clip_rect(mrb_state *mrb, mrb_value self)
   r = mrb_sdl2_gpu_rect_get_ptr(mrb, rect);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   rectResult = GPU_SetClipRect(t, *r);
-  return mrb_sdl2_gpu_rect(mrb, &rectResult);
+  return mrb_sdl2_gpu_rect(mrb, rectResult);
 }
 
 static mrb_value
@@ -1067,7 +1064,7 @@ mrb_sdl2_gpu_target_set_clip(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "iiii", &x, &y, &w, &h);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   rectResult = GPU_SetClip(t, x, y, w, h);
-  return mrb_sdl2_gpu_rect(mrb, &rectResult);
+  return mrb_sdl2_gpu_rect(mrb, rectResult);
 }
 
 static mrb_value
@@ -1464,62 +1461,6 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_get_x(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->x);
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_get_y(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y);
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_get_w(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w);
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_get_h(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h);
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_set_x(mrb_state *mrb, mrb_value self)
-{
-  mrb_float x;
-  mrb_get_args(mrb, "f", &x);
-  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->x = x));
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_set_y(mrb_state *mrb, mrb_value self)
-{
-  mrb_float y;
-  mrb_get_args(mrb, "f", &y);
-  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y = y));
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_set_w(mrb_state *mrb, mrb_value self)
-{
-  mrb_float w;
-  mrb_get_args(mrb, "f", &w);
-  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w = w));
-}
-
-static mrb_value
-mrb_sdl2_gpu_rect_set_h(mrb_state *mrb, mrb_value self)
-{
-  mrb_float h;
-  mrb_get_args(mrb, "f", &h);
-  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h = h));
-}
-
-static mrb_value
 mrb_sdl2_gpu_rendererid_get_name(mrb_state *mrb, mrb_value self)
 {
   return mrb_str_new_cstr(mrb, mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)->name);
@@ -1913,17 +1854,112 @@ mrb_sdl2_gpu_blendmode_set_alpha_equation(mrb_state *mrb, mrb_value self)
 
 static mrb_value
 mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
-  GPU_Rect r;
-  return mrb_sdl2_gpu_rect(mrb, &r);
+  mrb_int x, y, w, h;
+  int const argc = mrb_get_args(mrb, "|iiii", &x, &y, &w, &h);
+  mrb_sdl2_gpu_rect_data_t *data =
+    (mrb_sdl2_gpu_rect_data_t*)DATA_PTR(self);
+  if (data == NULL) {
+    data = (mrb_sdl2_gpu_rect_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
+    if (NULL == data) {
+      mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+    }
+  }
+
+  switch (argc) {
+  case 0:
+    data->rect.x = 0;
+    data->rect.y = 0;
+    data->rect.w = 0;
+    data->rect.h = 0;
+    break;
+  case 1:
+    data->rect.x = x;
+    data->rect.y = 0;
+    data->rect.w = 0;
+    data->rect.h = 0;
+    break;
+  case 2:
+    data->rect.x = x;
+    data->rect.y = y;
+    data->rect.w = 0;
+    data->rect.h = 0;
+    break;
+  case 3:
+    data->rect.x = x;
+    data->rect.y = y;
+    data->rect.w = w;
+    data->rect.h = 0;
+    break;
+  case 4:
+    data->rect.x = x;
+    data->rect.y = y;
+    data->rect.w = w;
+    data->rect.h = h;
+    break;
+  }
+
+  DATA_PTR(self) = data;
+  DATA_TYPE(self) = &mrb_sdl2_gpu_rect_data_type;
+  
+  return self;
 }
 
 static mrb_value
-mrb_sdl2_gpu_test(mrb_state *mrb, mrb_value self) {
-  int i = glewInit();
-  printf("gosho = %d", i);
-  return mrb_fixnum_value(i);
+mrb_sdl2_gpu_rect_get_x(mrb_state *mrb, mrb_value self)
+{
+  GPU_Rect *r = mrb_sdl2_gpu_rect_get_ptr(mrb, self);
+  return mrb_fixnum_value(r->x);
 }
 
+static mrb_value
+mrb_sdl2_gpu_rect_get_y(mrb_state *mrb, mrb_value self)
+{
+  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y);
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_get_w(mrb_state *mrb, mrb_value self)
+{
+  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w);
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_get_h(mrb_state *mrb, mrb_value self)
+{
+  return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h);
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_set_x(mrb_state *mrb, mrb_value self)
+{
+  mrb_int x;
+  mrb_get_args(mrb, "i", &x);
+  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->x = x));
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_set_y(mrb_state *mrb, mrb_value self)
+{
+  mrb_float y;
+  mrb_get_args(mrb, "f", &y);
+  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y = y));
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_set_w(mrb_state *mrb, mrb_value self)
+{
+  mrb_float w;
+  mrb_get_args(mrb, "f", &w);
+  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w = w));
+}
+
+static mrb_value
+mrb_sdl2_gpu_rect_set_h(mrb_state *mrb, mrb_value self)
+{
+  mrb_float h;
+  mrb_get_args(mrb, "f", &h);
+  return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h = h));
+}
 
 void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   struct RClass *class_Surface;
@@ -1938,12 +1974,10 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   class_Context     = mrb_define_class_under(mrb, mod_GPU,   "Context",     mrb->object_class);
   class_Camera      = mrb_define_class_under(mrb, mod_GPU,   "Camera",      mrb->object_class);
   class_BlendMode   = mrb_define_class_under(mrb, mod_GPU,   "BlendMode",   mrb->object_class);
-  class_Image       = mrb_define_class_under(mrb, mod_GPU,   "Image",       mrb->object_class);
   class_Rect        = mrb_define_class_under(mrb, mod_GPU,   "Rect",        mrb->object_class);
+  class_Image       = mrb_define_class_under(mrb, mod_GPU,   "Image",       mrb->object_class);
   class_MatrixStack = mrb_define_class_under(mrb, mod_GPU,   "MatrixStack", mrb->object_class);
-  
-  mrb_define_module_function(mrb, mod_GPU, "test",           mrb_sdl2_gpu_test,           MRB_ARGS_NONE());
-  
+
   /**************************************************************************
    * Initialization 
    * info: http://dinomage.com/reference/SDL_gpu/group__Initialization.html
@@ -2108,20 +2142,20 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
    * * GPU_BlendMode's properties
    * * GPU_Image's properties
    ***************************************************************************/
-  /*********************** GPU_Rect ****************************************************/
-  mrb_define_method(mrb, class_Rect, "init",    mrb_sdl2_gpu_rect_init,  MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "x",       mrb_sdl2_gpu_rect_get_x, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "x=",      mrb_sdl2_gpu_rect_set_x, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "y",       mrb_sdl2_gpu_rect_get_y, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "y=",      mrb_sdl2_gpu_rect_set_y, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "w",       mrb_sdl2_gpu_rect_get_w, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "w=",      mrb_sdl2_gpu_rect_set_w, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "h",       mrb_sdl2_gpu_rect_get_h, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "h=",      mrb_sdl2_gpu_rect_set_h, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "width",   mrb_sdl2_gpu_rect_get_w, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "width=",  mrb_sdl2_gpu_rect_set_w, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "height",  mrb_sdl2_gpu_rect_get_h, MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_Rect, "height=", mrb_sdl2_gpu_rect_set_h, MRB_ARGS_NONE());
+  /*********************** GPU_Rect ***************************************************************/
+  mrb_define_method(mrb, class_Rect, "initialize", mrb_sdl2_gpu_rect_init,  MRB_ARGS_OPT(4));
+  mrb_define_method(mrb, class_Rect, "x",          mrb_sdl2_gpu_rect_get_x, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "x=",         mrb_sdl2_gpu_rect_set_x, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_Rect, "y",          mrb_sdl2_gpu_rect_get_y, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "y=",         mrb_sdl2_gpu_rect_set_y, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_Rect, "w",          mrb_sdl2_gpu_rect_get_w, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "w=",         mrb_sdl2_gpu_rect_set_w, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_Rect, "h",          mrb_sdl2_gpu_rect_get_h, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "h=",         mrb_sdl2_gpu_rect_set_h, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_Rect, "width",      mrb_sdl2_gpu_rect_get_w, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "width=",     mrb_sdl2_gpu_rect_set_w, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_Rect, "height",     mrb_sdl2_gpu_rect_get_h, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Rect, "height=",    mrb_sdl2_gpu_rect_set_h, MRB_ARGS_REQ(1));
 
   /*********************** GPU_RendererID ***************************************************************/
   mrb_define_method(mrb, class_RendererID, "name",      mrb_sdl2_gpu_rendererid_get_name,     MRB_ARGS_NONE());
