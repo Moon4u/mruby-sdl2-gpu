@@ -1978,6 +1978,16 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   class_Image       = mrb_define_class_under(mrb, mod_GPU,   "Image",       mrb->object_class);
   class_MatrixStack = mrb_define_class_under(mrb, mod_GPU,   "MatrixStack", mrb->object_class);
 
+  MRB_SET_INSTANCE_TT(class_Rect,  MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Surface, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_RendererID, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Renderer, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Context, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Camera, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_BlendMode,  MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Image,  MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_MatrixStack,  MRB_TT_DATA);
+
   /**************************************************************************
    * Initialization 
    * info: http://dinomage.com/reference/SDL_gpu/group__Initialization.html
