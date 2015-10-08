@@ -119,7 +119,7 @@ mrb_sdl2_gpu_matrixstack(mrb_state *mrb, GPU_MatrixStack matrixstack) {
   mrb_sdl2_gpu_matrixstack_data_t *data =
     (mrb_sdl2_gpu_matrixstack_data_t*)
       mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_matrixstack_data_t));
-  if (NULL != data) {
+  if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->matrixstack = matrixstack;
@@ -170,7 +170,7 @@ mrb_sdl2_gpu_rect(mrb_state *mrb, GPU_Rect rect) {
   mrb_sdl2_gpu_rect_data_t *data =
     (mrb_sdl2_gpu_rect_data_t*)
       mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
-  if (NULL != data) {
+  if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->rect = rect;
@@ -432,7 +432,7 @@ mrb_sdl2_gpu_renderer(mrb_state *mrb, GPU_Renderer *renderer) {
   mrb_sdl2_gpu_renderer_data_t *data =
     (mrb_sdl2_gpu_renderer_data_t*)
       mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_renderer_data_t));
-  if (NULL != data) {
+  if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->renderer = renderer;
@@ -483,7 +483,7 @@ mrb_sdl2_gpu_rendererid(mrb_state *mrb, GPU_RendererID *rendererid) {
     (mrb_sdl2_gpu_rendererid_data_t*)
       mrb_malloc(mrb,
                  sizeof(mrb_sdl2_gpu_rendererid_data_t));
-  if (NULL != data) {
+  if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->rendererid = rendererid;
@@ -1010,10 +1010,15 @@ mrb_sdl2_gpu_target_get_pixel(mrb_state *mrb, mrb_value self) {
 static mrb_value
 mrb_sdl2_gpu_target_set_clip_rect(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
-  GPU_Rect *r;
+  GPU_Rect *r = NULL;
   GPU_Rect rectResult;
   mrb_value rect;
   mrb_get_args(mrb, "o", &rect);
+
+  if (mrb_nil_p(rect))
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "GPU::Rect can't be nil. Use .unset_clip instead.");
+
   r = mrb_sdl2_gpu_rect_get_ptr(mrb, rect);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   rectResult = GPU_SetClipRect(t, *r);
@@ -1129,9 +1134,9 @@ mrb_sdl2_gpu_image_initialize(mrb_state *mrb, mrb_value self) {
   }
   if (NULL == image) {
     mrb_free(mrb, data);
-    mruby_sdl2_raise_error(mrb);
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Could not initialize Image with the given paramets");
   }
-
   data->image = image;
 
   DATA_PTR(self) = data;
@@ -1177,14 +1182,19 @@ static mrb_value
 mrb_sdl2_gpu_image_update(mrb_state *mrb, mrb_value self) {
   mrb_value surface, surface_rect, image_rect;
   SDL_Surface *s;
-  GPU_Rect *sr;
-  GPU_Rect *ir;
+  GPU_Rect *sr = NULL;
+  GPU_Rect *ir = NULL;
   GPU_Image *i;
-  mrb_get_args(mrb, "ooo", &surface, &image_rect, &surface_rect);
+  int argc = mrb_get_args(mrb, "o|oo", &surface, &image_rect, &surface_rect);
   i = mrb_sdl2_gpu_image_get_ptr(mrb, self);
   s = mrb_sdl2_video_surface_get_ptr(mrb, surface);
-  sr = mrb_sdl2_gpu_rect_get_ptr(mrb, surface_rect);
-  ir = mrb_sdl2_gpu_rect_get_ptr(mrb, image_rect);
+
+  if (argc > 1)
+    ir = mrb_sdl2_gpu_rect_get_ptr(mrb, image_rect);
+
+  if (argc > 2)
+    sr = mrb_sdl2_gpu_rect_get_ptr(mrb, surface_rect);
+
   GPU_UpdateImage(i, ir, s, sr);
   return mrb_nil_value();
 }
@@ -1307,10 +1317,11 @@ mrb_sdl2_gpu_image_set_wrap_mode(mrb_state *mrb, mrb_value self) {
 
 static mrb_value
 mrb_sdl2_gpu_surface_to_image(mrb_state *mrb, mrb_value self) {
-  return
-      mrb_sdl2_gpu_image(mrb,
-                         GPU_CopyImageFromSurface(
-                             mrb_sdl2_video_surface_get_ptr(mrb, self)));
+  GPU_Image *i = GPU_CopyImageFromSurface(
+      mrb_sdl2_video_surface_get_ptr(mrb, self));
+  if (NULL == i)
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Could not convert surface to image");
+  return  mrb_sdl2_gpu_image(mrb, i);
 }
 
 static mrb_value
@@ -2012,7 +2023,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
    ***************************************************************************/
   mrb_define_module_function(mrb, mod_GPU, "load_surface", mrb_sdl2_gpu_load_surface, MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, mod_GPU, "save_surface", mrb_sdl2_gpu_save_surface, MRB_ARGS_REQ(2));
-  
+
   /***************************************************************************
    * Target Class Functions
    ***************************************************************************/
@@ -2038,7 +2049,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Image, "destroy",            mrb_sdl2_gpu_image_free,               MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "create_alias",       mrb_sdl2_gpu_image_create_alias,       MRB_ARGS_REQ(1));
   mrb_define_method(mrb, class_Image, "copy",               mrb_sdl2_gpu_image_copy,               MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_Image, "update",             mrb_sdl2_gpu_image_update,             MRB_ARGS_REQ(2));
+  mrb_define_method(mrb, class_Image, "update",             mrb_sdl2_gpu_image_update,             MRB_ARGS_REQ(1) | MRB_ARGS_OPT(2));
   mrb_define_method(mrb, class_Image, "save",               mrb_sdl2_gpu_image_save,               MRB_ARGS_REQ(1));
   mrb_define_method(mrb, class_Image, "generate_mipmaps",   mrb_sdl2_gpu_image_generate_mipmaps,   MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "set_rgb",            mrb_sdl2_gpu_image_set_rgb,            MRB_ARGS_REQ(3));
@@ -2088,7 +2099,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
    * * GPU_BlendMode's properties
    * * GPU_Image's properties
    ***************************************************************************/
-  /*********************** GPU_Rect ***************************************************************/
+  /*********************** GPU_Rect ********************************************************/
   mrb_define_method(mrb, class_Rect, "initialize", mrb_sdl2_gpu_rect_init,  MRB_ARGS_OPT(4));
   mrb_define_method(mrb, class_Rect, "x",          mrb_sdl2_gpu_rect_get_x, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Rect, "x=",         mrb_sdl2_gpu_rect_set_x, MRB_ARGS_REQ(1));
@@ -2103,13 +2114,13 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Rect, "height",     mrb_sdl2_gpu_rect_get_h, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Rect, "height=",    mrb_sdl2_gpu_rect_set_h, MRB_ARGS_REQ(1));
 
-  /*********************** GPU_RendererID ***************************************************************/
+  /*********************** GPU_RendererID ********************************************************************/
   mrb_define_method(mrb, class_RendererID, "name",      mrb_sdl2_gpu_rendererid_get_name,     MRB_ARGS_NONE());
   mrb_define_method(mrb, class_RendererID, "name=",     mrb_sdl2_gpu_rendererid_set_name,     MRB_ARGS_NONE());
   mrb_define_method(mrb, class_RendererID, "renderer",  mrb_sdl2_gpu_rendererid_get_renderer, MRB_ARGS_NONE());
   mrb_define_method(mrb, class_RendererID, "renderer=", mrb_sdl2_gpu_rendererid_set_renderer, MRB_ARGS_NONE());
 
-  /*********************** GPU_BlendMode *****************************************************************************/
+  /*********************** GPU_BlendMode ******************************************************************************/
   mrb_define_method(mrb, class_BlendMode, "source_color",   mrb_sdl2_gpu_blendmode_source_color,       MRB_ARGS_NONE());
   mrb_define_method(mrb, class_BlendMode, "source_color=",  mrb_sdl2_gpu_blendmode_set_source_color,   MRB_ARGS_REQ(1));
   mrb_define_method(mrb, class_BlendMode, "source_alpha",   mrb_sdl2_gpu_blendmode_source_alpha,       MRB_ARGS_NONE());
@@ -2122,7 +2133,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_BlendMode, "dest_alpha=",    mrb_sdl2_gpu_blendmode_set_color_equation, MRB_ARGS_REQ(1));
   mrb_define_method(mrb, class_BlendMode, "dest_alpha",     mrb_sdl2_gpu_blendmode_alpha_equation,     MRB_ARGS_NONE());
   mrb_define_method(mrb, class_BlendMode, "dest_alpha=",    mrb_sdl2_gpu_blendmode_set_alpha_equation, MRB_ARGS_REQ(1));
-    
+
   /*********************** GPU_Image *****************************************************************************/
   mrb_define_method(mrb, class_Image, "renderer",         mrb_sdl2_gpu_image_renderer,            MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "target",           mrb_sdl2_gpu_image_target,              MRB_ARGS_NONE());
@@ -2172,7 +2183,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Image, "use_blending?",    mrb_sdl2_gpu_image_use_blending,        MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "blending",         mrb_sdl2_gpu_image_use_blending,        MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "blending=",        mrb_sdl2_gpu_image_set_use_blending,    MRB_ARGS_REQ(1));
-  
+
 
   /***************************************************************************
    * Enums & Defines
