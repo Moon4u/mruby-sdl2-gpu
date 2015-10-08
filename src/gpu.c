@@ -1,4 +1,4 @@
-/*
+/*Copyright 2015 <Daniel Kolev>
   mruby-sdl-gpu is a gem for SDL_gpu.h
   info can be found at:
   * git source:   https://github.com/grimfang4/sdl-gpu 
@@ -6,21 +6,20 @@
   */
 
 // mruby related includes
-#include "mruby.h"
+#include <SDL/SDL_gpu.h>
+#include "../include/mruby.h"
 #include "mruby/data.h"
 #include "mruby/class.h"
-//#include "mruby/value.h"
 #include "mruby/variable.h"
 #include "mruby/array.h"
 #include "mruby/string.h"
 
 // mruby-sdl2 related includes
-#include "sdl2_surface.h"
-#include "sdl2_render.h"
-#include <SDL/SDL_gpu.h>
+#include "../include/sdl2_surface.h"
+#include "../include/sdl2_render.h"
 
 #include "glew/GL/glew.h"
-#include "gpu.h"
+#include "../src/gpu.h"
 
 struct RClass *mod_GPU                              = NULL;
 // classes in mruby
@@ -43,8 +42,7 @@ typedef struct mrb_sdl2_gpu_target_data_t {
 } mrb_sdl2_gpu_target_data_t;
 
 static void
-mrb_sdl2_gpu_target_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_target_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_target_data_t *data =
     (mrb_sdl2_gpu_target_data_t*)p;
   if (NULL != data->target) {
@@ -57,28 +55,29 @@ static struct mrb_data_type const mrb_sdl2_gpu_target_data_type = {
 };
 
 GPU_Target *
-mrb_sdl2_gpu_target_get_ptr(mrb_state *mrb, mrb_value target)
-{
+mrb_sdl2_gpu_target_get_ptr(mrb_state *mrb, mrb_value target) {
   mrb_sdl2_gpu_target_data_t *data;
   if (mrb_nil_p(target)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_target_data_t*)mrb_data_get_ptr(mrb, target, &mrb_sdl2_gpu_target_data_type);
+    (mrb_sdl2_gpu_target_data_t*)
+      mrb_data_get_ptr(mrb, target, &mrb_sdl2_gpu_target_data_type);
   return data->target;
 }
 
 
 mrb_value
-mrb_sdl2_gpu_target(mrb_state *mrb, GPU_Target *target)
-{
+mrb_sdl2_gpu_target(mrb_state *mrb, GPU_Target *target) {
   mrb_sdl2_gpu_target_data_t *data =
-    (mrb_sdl2_gpu_target_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_target_data_t));
+    (mrb_sdl2_gpu_target_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_target_data_t));
   if (NULL == data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->target = target;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Target, &mrb_sdl2_gpu_target_data_type, data));
+  return mrb_obj_value(
+  Data_Wrap_Struct(mrb, class_Target, &mrb_sdl2_gpu_target_data_type, data));
 }
 /*******************************
  * GPU_Target bindings ends here
@@ -93,8 +92,7 @@ typedef struct mrb_sdl2_gpu_matrixstack_data_t {
 } mrb_sdl2_gpu_matrixstack_data_t;
 
 static void
-mrb_sdl2_gpu_matrixstack_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_matrixstack_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_matrixstack_data_t *data =
     (mrb_sdl2_gpu_matrixstack_data_t*)p;
   if (NULL != data) {
@@ -107,25 +105,28 @@ static struct mrb_data_type const mrb_sdl2_gpu_matrixstack_data_type = {
 };
 
 GPU_MatrixStack
-mrb_sdl2_gpu_matrixstack_get(mrb_state *mrb, mrb_value matrixstack)
-{
+mrb_sdl2_gpu_matrixstack_get(mrb_state *mrb, mrb_value matrixstack) {
   mrb_sdl2_gpu_matrixstack_data_t *data;
   data =
-    (mrb_sdl2_gpu_matrixstack_data_t*)mrb_data_get_ptr(mrb, matrixstack, &mrb_sdl2_gpu_matrixstack_data_type);
+    (mrb_sdl2_gpu_matrixstack_data_t*)
+      mrb_data_get_ptr(mrb, matrixstack, &mrb_sdl2_gpu_matrixstack_data_type);
   return data->matrixstack;
 }
 
 
 mrb_value
-mrb_sdl2_gpu_matrixstack(mrb_state *mrb, GPU_MatrixStack matrixstack)
-{
+mrb_sdl2_gpu_matrixstack(mrb_state *mrb, GPU_MatrixStack matrixstack) {
   mrb_sdl2_gpu_matrixstack_data_t *data =
-    (mrb_sdl2_gpu_matrixstack_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_matrixstack_data_t));
+    (mrb_sdl2_gpu_matrixstack_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_matrixstack_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->matrixstack = matrixstack;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_MatrixStack, &mrb_sdl2_gpu_matrixstack_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_MatrixStack,
+                       &mrb_sdl2_gpu_matrixstack_data_type, data));
 }
 /************************************
  * GPU_MatrixStack bindings ends here
@@ -140,8 +141,7 @@ typedef struct mrb_sdl2_gpu_rect_data_t {
 } mrb_sdl2_gpu_rect_data_t;
 
 static void
-mrb_sdl2_gpu_rect_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_rect_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_rect_data_t *data =
     (mrb_sdl2_gpu_rect_data_t*)p;
   if (NULL != data) {
@@ -154,27 +154,31 @@ static struct mrb_data_type const mrb_sdl2_gpu_rect_data_type = {
 };
 
 GPU_Rect *
-mrb_sdl2_gpu_rect_get_ptr(mrb_state *mrb, mrb_value rect)
-{
+mrb_sdl2_gpu_rect_get_ptr(mrb_state *mrb, mrb_value rect) {
   mrb_sdl2_gpu_rect_data_t *data;
   if (mrb_nil_p(rect)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_rect_data_t*)mrb_data_get_ptr(mrb, rect, &mrb_sdl2_gpu_rect_data_type);
+    (mrb_sdl2_gpu_rect_data_t*)
+      mrb_data_get_ptr(mrb, rect, &mrb_sdl2_gpu_rect_data_type);
   return &data->rect;
 }
 
 mrb_value
-mrb_sdl2_gpu_rect(mrb_state *mrb, GPU_Rect rect)
-{
+mrb_sdl2_gpu_rect(mrb_state *mrb, GPU_Rect rect) {
   mrb_sdl2_gpu_rect_data_t *data =
-    (mrb_sdl2_gpu_rect_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
+    (mrb_sdl2_gpu_rect_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->rect = rect;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Rect, &mrb_sdl2_gpu_rect_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Rect,
+                       &mrb_sdl2_gpu_rect_data_type,
+                       data));
 }
 /*******************************
  * GPU_Rect bindings ends here
@@ -189,8 +193,7 @@ typedef struct mrb_sdl2_gpu_image_data_t {
 } mrb_sdl2_gpu_image_data_t;
 
 static void
-mrb_sdl2_gpu_image_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_image_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_image_data_t *data =
     (mrb_sdl2_gpu_image_data_t*)p;
   if (NULL != data->image) {
@@ -203,27 +206,33 @@ static struct mrb_data_type const mrb_sdl2_gpu_image_data_type = {
 };
 
 GPU_Image *
-mrb_sdl2_gpu_image_get_ptr(mrb_state *mrb, mrb_value image)
-{
-  mrb_sdl2_gpu_image_data_t *data;
+mrb_sdl2_gpu_image_get_ptr(mrb_state *mrb, mrb_value image) {
+mrb_sdl2_gpu_image_data_t *data;
   if (mrb_nil_p(image)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_image_data_t*)mrb_data_get_ptr(mrb, image, &mrb_sdl2_gpu_image_data_type);
+    (mrb_sdl2_gpu_image_data_t*)
+      mrb_data_get_ptr(mrb,
+                       image,
+                       &mrb_sdl2_gpu_image_data_type);
   return data->image;
 }
 
 mrb_value
-mrb_sdl2_gpu_image(mrb_state *mrb, GPU_Image *image)
-{
+mrb_sdl2_gpu_image(mrb_state *mrb, GPU_Image *image) {
   mrb_sdl2_gpu_image_data_t *data =
-    (mrb_sdl2_gpu_image_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_image_data_t));
+    (mrb_sdl2_gpu_image_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_image_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->image = image;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Image, &mrb_sdl2_gpu_image_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Image,
+                       &mrb_sdl2_gpu_image_data_type,
+                       data));
 }
 /*******************************
  * GPU_Image bindings ends here
@@ -237,8 +246,7 @@ typedef struct mrb_sdl2_gpu_blendmode_data_t {
 } mrb_sdl2_gpu_blendmode_data_t;
 
 static void
-mrb_sdl2_gpu_blendmode_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_blendmode_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_blendmode_data_t *data =
     (mrb_sdl2_gpu_blendmode_data_t*)p;
   if (NULL != data) {
@@ -251,27 +259,33 @@ static struct mrb_data_type const mrb_sdl2_gpu_blendmode_data_type = {
 };
 
 GPU_BlendMode *
-mrb_sdl2_gpu_blendmode_get_ptr(mrb_state *mrb, mrb_value blendmode)
-{
+mrb_sdl2_gpu_blendmode_get_ptr(mrb_state *mrb, mrb_value blendmode) {
   mrb_sdl2_gpu_blendmode_data_t *data;
   if (mrb_nil_p(blendmode)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_blendmode_data_t*)mrb_data_get_ptr(mrb, blendmode, &mrb_sdl2_gpu_blendmode_data_type);
+    (mrb_sdl2_gpu_blendmode_data_t*)
+      mrb_data_get_ptr(mrb,
+                       blendmode,
+                       &mrb_sdl2_gpu_blendmode_data_type);
   return data->blendmode;
 }
 
 mrb_value
-mrb_sdl2_gpu_blendmode(mrb_state *mrb, GPU_BlendMode *blendmode)
-{
+mrb_sdl2_gpu_blendmode(mrb_state *mrb, GPU_BlendMode *blendmode) {
   mrb_sdl2_gpu_blendmode_data_t *data =
-    (mrb_sdl2_gpu_blendmode_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_blendmode_data_t));
+    (mrb_sdl2_gpu_blendmode_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_blendmode_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->blendmode = blendmode;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_BlendMode, &mrb_sdl2_gpu_blendmode_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_BlendMode,
+                       &mrb_sdl2_gpu_blendmode_data_type,
+                       data));
 }
 /**********************************
  * GPU_BlendMode bindings ends here
@@ -286,8 +300,7 @@ typedef struct mrb_sdl2_gpu_context_data_t {
 } mrb_sdl2_gpu_context_data_t;
 
 static void
-mrb_sdl2_gpu_context_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_context_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_context_data_t *data =
     (mrb_sdl2_gpu_context_data_t*)p;
   if (NULL != data) {
@@ -300,28 +313,31 @@ static struct mrb_data_type const mrb_sdl2_gpu_context_data_type = {
 };
 
 GPU_Context *
-mrb_sdl2_gpu_context_get_ptr(mrb_state *mrb, mrb_value context)
-{
+mrb_sdl2_gpu_context_get_ptr(mrb_state *mrb, mrb_value context) {
   mrb_sdl2_gpu_context_data_t *data;
   if (mrb_nil_p(context)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_context_data_t*)mrb_data_get_ptr(mrb, context, &mrb_sdl2_gpu_context_data_type);
+    (mrb_sdl2_gpu_context_data_t*)
+      mrb_data_get_ptr(mrb, context, &mrb_sdl2_gpu_context_data_type);
   return data->context;
 }
 
 
 mrb_value
-mrb_sdl2_gpu_context(mrb_state *mrb, GPU_Context *context)
-{
+mrb_sdl2_gpu_context(mrb_state *mrb, GPU_Context *context) {
   mrb_sdl2_gpu_context_data_t *data =
-    (mrb_sdl2_gpu_context_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_context_data_t));
+    (mrb_sdl2_gpu_context_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_context_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->context = context;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Context, &mrb_sdl2_gpu_context_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Context,
+                       &mrb_sdl2_gpu_context_data_type, data));
 }
 /*****************************************
  * GPU_Context bindings renderer ends here
@@ -335,8 +351,7 @@ typedef struct mrb_sdl2_gpu_camera_data_t {
 } mrb_sdl2_gpu_camera_data_t;
 
 static void
-mrb_sdl2_gpu_camera_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_camera_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_camera_data_t *data =
     (mrb_sdl2_gpu_camera_data_t*)p;
   if (NULL != data) {
@@ -349,28 +364,31 @@ static struct mrb_data_type const mrb_sdl2_gpu_camera_data_type = {
 };
 
 GPU_Camera *
-mrb_sdl2_gpu_camera_get_ptr(mrb_state *mrb, mrb_value camera)
-{
+mrb_sdl2_gpu_camera_get_ptr(mrb_state *mrb, mrb_value camera) {
   mrb_sdl2_gpu_camera_data_t *data;
   if (mrb_nil_p(camera)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_camera_data_t*)mrb_data_get_ptr(mrb, camera, &mrb_sdl2_gpu_camera_data_type);
+    (mrb_sdl2_gpu_camera_data_t*)
+      mrb_data_get_ptr(mrb, camera, &mrb_sdl2_gpu_camera_data_type);
   return data->camera;
 }
 
 
 mrb_value
-mrb_sdl2_gpu_camera(mrb_state *mrb, GPU_Camera *camera)
-{
+mrb_sdl2_gpu_camera(mrb_state *mrb, GPU_Camera *camera) {
   mrb_sdl2_gpu_camera_data_t *data =
-    (mrb_sdl2_gpu_camera_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_camera_data_t));
+    (mrb_sdl2_gpu_camera_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_camera_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->camera = camera;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Camera, &mrb_sdl2_gpu_camera_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Camera,
+                       &mrb_sdl2_gpu_camera_data_type, data));
 }
 /********************************************
  * GPU_Camera bindings renderer ends here
@@ -384,8 +402,7 @@ typedef struct mrb_sdl2_gpu_renderer_data_t {
 } mrb_sdl2_gpu_renderer_data_t;
 
 static void
-mrb_sdl2_gpu_renderer_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_renderer_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_renderer_data_t *data =
     (mrb_sdl2_gpu_renderer_data_t*)p;
   if (NULL != data->renderer) {
@@ -398,28 +415,31 @@ static struct mrb_data_type const mrb_sdl2_gpu_renderer_data_type = {
 };
 
 GPU_Renderer *
-mrb_sdl2_gpu_renderer_get_ptr(mrb_state *mrb, mrb_value renderer)
-{
+mrb_sdl2_gpu_renderer_get_ptr(mrb_state *mrb, mrb_value renderer) {
   mrb_sdl2_gpu_renderer_data_t *data;
   if (mrb_nil_p(renderer)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_renderer_data_t*)mrb_data_get_ptr(mrb, renderer, &mrb_sdl2_gpu_renderer_data_type);
+    (mrb_sdl2_gpu_renderer_data_t*)
+      mrb_data_get_ptr(mrb, renderer, &mrb_sdl2_gpu_renderer_data_type);
   return data->renderer;
 }
 
 
 mrb_value
-mrb_sdl2_gpu_renderer(mrb_state *mrb, GPU_Renderer *renderer)
-{
+mrb_sdl2_gpu_renderer(mrb_state *mrb, GPU_Renderer *renderer) {
   mrb_sdl2_gpu_renderer_data_t *data =
-    (mrb_sdl2_gpu_renderer_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_renderer_data_t));
+    (mrb_sdl2_gpu_renderer_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_renderer_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->renderer = renderer;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_Renderer, &mrb_sdl2_gpu_renderer_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Renderer,
+                       &mrb_sdl2_gpu_renderer_data_type, data));
 }
 /********************************
   GPU_Renderer bindings ends here
@@ -433,8 +453,7 @@ typedef struct mrb_sdl2_gpu_rendererid_data_t {
 } mrb_sdl2_gpu_rendererid_data_t;
 
 static void
-mrb_sdl2_gpu_rendererid_data_free(mrb_state *mrb, void *p)
-{
+mrb_sdl2_gpu_rendererid_data_free(mrb_state *mrb, void *p) {
   mrb_sdl2_gpu_rendererid_data_t *data =
     (mrb_sdl2_gpu_rendererid_data_t*)p;
   if (NULL != data) {
@@ -447,27 +466,31 @@ static struct mrb_data_type const mrb_sdl2_gpu_rendererid_data_type = {
 };
 
 GPU_RendererID *
-mrb_sdl2_gpu_rendererid_get_ptr(mrb_state *mrb, mrb_value rendererid)
-{
+mrb_sdl2_gpu_rendererid_get_ptr(mrb_state *mrb, mrb_value rendererid) {
   mrb_sdl2_gpu_rendererid_data_t *data;
   if (mrb_nil_p(rendererid)) {
     return NULL;
   }
   data =
-    (mrb_sdl2_gpu_rendererid_data_t*)mrb_data_get_ptr(mrb, rendererid, &mrb_sdl2_gpu_rendererid_data_type);
+    (mrb_sdl2_gpu_rendererid_data_t*)
+      mrb_data_get_ptr(mrb, rendererid, &mrb_sdl2_gpu_rendererid_data_type);
   return data->rendererid;
 }
 
 mrb_value
-mrb_sdl2_gpu_rendererid(mrb_state *mrb, GPU_RendererID *rendererid)
-{
+mrb_sdl2_gpu_rendererid(mrb_state *mrb, GPU_RendererID *rendererid) {
   mrb_sdl2_gpu_rendererid_data_t *data =
-    (mrb_sdl2_gpu_rendererid_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rendererid_data_t));
+    (mrb_sdl2_gpu_rendererid_data_t*)
+      mrb_malloc(mrb,
+                 sizeof(mrb_sdl2_gpu_rendererid_data_t));
   if (NULL != data) {
     mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
   }
   data->rendererid = rendererid;
-  return mrb_obj_value(Data_Wrap_Struct(mrb, class_RendererID, &mrb_sdl2_gpu_rendererid_data_type, data));
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_RendererID,
+                       &mrb_sdl2_gpu_rendererid_data_type, data));
 }
 /**********************************
  * GPU_RendererID bindings end here
@@ -479,8 +502,7 @@ mrb_sdl2_gpu_rendererid(mrb_state *mrb, GPU_RendererID *rendererid)
  ************************************************/
 
 static mrb_value
-mrb_sdl2_gpu_get_linked_ver(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_linked_ver(mrb_state *mrb, mrb_value self) {
   mrb_value array;
   SDL_version v;
   array = mrb_ary_new_capa(mrb, 3);
@@ -492,8 +514,7 @@ mrb_sdl2_gpu_get_linked_ver(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_init_window(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_init_window(mrb_state *mrb, mrb_value self) {
   mrb_int windowID;
   mrb_get_args(mrb, "i", &windowID);
   GPU_SetInitWindow(windowID);
@@ -501,14 +522,12 @@ mrb_sdl2_gpu_set_init_window(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_init_window(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_init_window(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_GetInitWindow());
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_pre_init_flags(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_pre_init_flags(mrb_state *mrb, mrb_value self) {
   mrb_int GPU_flags;
   mrb_get_args(mrb, "i", &GPU_flags);
   GPU_SetPreInitFlags(GPU_flags);
@@ -516,14 +535,12 @@ mrb_sdl2_gpu_set_pre_init_flags(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_pre_init_flags(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_pre_init_flags(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_GetPreInitFlags());
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_required_features(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_required_features(mrb_state *mrb, mrb_value self) {
   mrb_int features;
   mrb_get_args(mrb, "i", &features);
   GPU_SetRequiredFeatures(features);
@@ -531,61 +548,51 @@ mrb_sdl2_gpu_set_required_features(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_required_features(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_required_features(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_GetRequiredFeatures());
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_default_render_order(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_default_render_order(mrb_state *mrb, mrb_value self) {
   mrb_raise(mrb, E_NOTIMP_ERROR, "not implemented.");
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_renderer_order(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_renderer_order(mrb_state *mrb, mrb_value self) {
   mrb_raise(mrb, E_NOTIMP_ERROR, "not implemented.");
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_renderer_order(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_renderer_order(mrb_state *mrb, mrb_value self) {
   mrb_raise(mrb, E_NOTIMP_ERROR, "not implemented.");
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_init(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_init(mrb_state *mrb, mrb_value self) {
   mrb_int w, h, sdl_flags;
   GPU_Target *t;
   mrb_get_args(mrb, "iii", &w, &h, &sdl_flags);
-  
   t = GPU_Init(w, h, sdl_flags);
   if (NULL == t)
     mrb_raise(mrb, E_NOTIMP_ERROR, "GEORGE");
-  
+
   return mrb_sdl2_gpu_target(mrb, t);
 }
 
 static mrb_value
-mrb_sdl2_gpu_init_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_init_renderer(mrb_state *mrb, mrb_value self) {
   mrb_int w, h, sdl_flags, renderer_enum;
   GPU_Target *t;
   mrb_get_args(mrb, "iiii", &renderer_enum, &w, &h, &sdl_flags);
-  
   t = GPU_InitRenderer(renderer_enum, w, h, sdl_flags);
-  
   return mrb_sdl2_gpu_target(mrb, t);
 }
 
 static mrb_value
-mrb_sdl2_gpu_init_renderer_by_id(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_init_renderer_by_id(mrb_state *mrb, mrb_value self) {
   mrb_int w, h, sdl_flags;
   mrb_value renderer_request;
   GPU_Target *t;
@@ -593,32 +600,26 @@ mrb_sdl2_gpu_init_renderer_by_id(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "oiii", &renderer_request, &w, &h, &sdl_flags);
   r = mrb_sdl2_gpu_rendererid_get_ptr(mrb, renderer_request);
   t = GPU_InitRendererByID(*r, w, h, sdl_flags);
-  
   return mrb_sdl2_gpu_target(mrb, t);
 }
 
 static mrb_value
-mrb_sdl2_gpu_feature_enabled(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_feature_enabled(mrb_state *mrb, mrb_value self) {
   mrb_int feature;
   int result;
   mrb_get_args(mrb, "i", &feature);
-  
   result = GPU_IsFeatureEnabled(feature);
-  
   return mrb_fixnum_value(result);
 }
 
 static mrb_value
-mrb_sdl2_gpu_close_current_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_close_current_renderer(mrb_state *mrb, mrb_value self) {
   GPU_CloseCurrentRenderer();
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_quit(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_quit(mrb_state *mrb, mrb_value self) {
   GPU_Quit();
   return mrb_nil_value();
 }
@@ -633,8 +634,7 @@ mrb_sdl2_gpu_quit(mrb_state *mrb, mrb_value self)
  ***********************************************************************/
 
 static mrb_value
-mrb_sdl2_gpu_set_debug_level(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_debug_level(mrb_state *mrb, mrb_value self) {
   mrb_int level;
   mrb_get_args(mrb, "i", &level);
   GPU_SetDebugLevel(level);
@@ -642,8 +642,7 @@ mrb_sdl2_gpu_set_debug_level(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_debug_level(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_debug_level(mrb_state *mrb, mrb_value self) {
   int result = GPU_GetDebugLevel();
   return mrb_fixnum_value(result);
 }
@@ -657,32 +656,31 @@ mrb_sdl2_gpu_get_debug_level(mrb_state *mrb, mrb_value self)
  *  Binding Renderer Setup functions starts here
  ***********************************************************************/
 static mrb_value
-mrb_sdl2_gpu_mark_renderer_id(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_mark_renderer_id(mrb_state *mrb, mrb_value self) {
   mrb_value name;
   mrb_int renderer, major_version, minor_version;
   GPU_RendererID rid;
   mrb_get_args(mrb, "Siii", &name, &renderer, &major_version, &minor_version);
 
-  rid = GPU_MakeRendererID(RSTRING_PTR(name), renderer, major_version, minor_version);
+  rid = GPU_MakeRendererID(RSTRING_PTR(name),
+                           renderer, major_version, minor_version);
   return mrb_sdl2_gpu_rendererid(mrb, &rid);
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_renderer_id(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_renderer_id(mrb_state *mrb, mrb_value self) {
   mrb_value name;
   mrb_int renderer, major_version, minor_version;
   GPU_RendererID rid;
   mrb_get_args(mrb, "Siii", &name, &renderer, &major_version, &minor_version);
 
-  rid = GPU_MakeRendererID(RSTRING_PTR(name), renderer, major_version, minor_version);
+  rid = GPU_MakeRendererID(RSTRING_PTR(name),
+                           renderer, major_version, minor_version);
   return mrb_sdl2_gpu_rendererid(mrb, &rid);
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_renderer_index(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_renderer_index(mrb_state *mrb, mrb_value self) {
   mrb_int index;
   GPU_RendererID rid;
   mrb_get_args(mrb, "i", &index);
@@ -692,8 +690,7 @@ mrb_sdl2_gpu_get_renderer_index(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_num_registered_renderers(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_num_registered_renderers(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_GetNumRegisteredRenderers());
 }
 /***********************************************************************
@@ -705,20 +702,17 @@ mrb_sdl2_gpu_get_num_registered_renderers(mrb_state *mrb, mrb_value self)
  * Binding Renderer Controls functions ends here
  ***********************************************************************/
 static mrb_value
-mrb_sdl2_gpu_reserver_next_enum(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_reserver_next_enum(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_ReserveNextRendererEnum());
 }
 
 static mrb_value
-mrb_sdl2_gpu_num_active_renderers(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_num_active_renderers(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(GPU_GetNumActiveRenderers());
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_renderer(mrb_state *mrb, mrb_value self) {
   mrb_value id;
   GPU_RendererID *rid;
   GPU_Renderer *t;
@@ -731,8 +725,7 @@ mrb_sdl2_gpu_get_renderer(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_current_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_current_renderer(mrb_state *mrb, mrb_value self) {
   GPU_Renderer *t = GPU_GetCurrentRenderer();
   if (NULL == t)
     return mrb_nil_value();
@@ -740,8 +733,7 @@ mrb_sdl2_gpu_get_current_renderer(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_current_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_current_renderer(mrb_state *mrb, mrb_value self) {
   mrb_value id;
   GPU_RendererID *rid;
   mrb_get_args(mrb, "o", &id);
@@ -751,15 +743,13 @@ mrb_sdl2_gpu_set_current_renderer(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_reset_renderer_state(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_reset_renderer_state(mrb_state *mrb, mrb_value self) {
   GPU_ResetRendererState();
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_context_target(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_context_target(mrb_state *mrb, mrb_value self) {
   GPU_Target *t = GPU_GetContextTarget();
   if (NULL == t)
     return mrb_nil_value();
@@ -767,8 +757,7 @@ mrb_sdl2_gpu_get_context_target(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_window_target(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_window_target(mrb_state *mrb, mrb_value self) {
   mrb_int windowID;
   GPU_Target *t;
   mrb_get_args(mrb, "i", &windowID);
@@ -779,8 +768,7 @@ mrb_sdl2_gpu_get_window_target(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_create_target_from_window(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_create_target_from_window(mrb_state *mrb, mrb_value self) {
   mrb_int windowID;
   GPU_Target *t;
   mrb_get_args(mrb, "i", &windowID);
@@ -791,8 +779,7 @@ mrb_sdl2_gpu_create_target_from_window(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_make_current(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_make_current(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   mrb_int windowID;
   mrb_get_args(mrb, "i", &windowID);
@@ -802,8 +789,7 @@ mrb_sdl2_gpu_target_make_current(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_window_resolution(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_window_resolution(mrb_state *mrb, mrb_value self) {
   mrb_int w, h;
   int result;
   mrb_get_args(mrb, "ii", &w, &h);
@@ -812,8 +798,7 @@ mrb_sdl2_gpu_set_window_resolution(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_fullscreen(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_fullscreen(mrb_state *mrb, mrb_value self) {
   mrb_int enable_fullscreen, use_desktop_resolution;
   int result;
   mrb_get_args(mrb, "ii", &enable_fullscreen, &use_desktop_resolution);
@@ -822,15 +807,13 @@ mrb_sdl2_gpu_set_fullscreen(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_fullscreen(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_fullscreen(mrb_state *mrb, mrb_value self) {
   int result = GPU_GetFullscreen();
   return mrb_fixnum_value(result);
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_shape_blending(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_shape_blending(mrb_state *mrb, mrb_value self) {
   mrb_int enable;
   mrb_get_args(mrb, "i", &enable);
   GPU_SetShapeBlending(enable);
@@ -838,8 +821,7 @@ mrb_sdl2_gpu_set_shape_blending(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_blend_mode_from_preset(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_blend_mode_from_preset(mrb_state *mrb, mrb_value self) {
   mrb_int preset;
   GPU_BlendMode bm;
   mrb_get_args(mrb, "i", &preset);
@@ -848,17 +830,16 @@ mrb_sdl2_gpu_get_blend_mode_from_preset(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_shape_blend_mode_function(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_shape_blend_mode_function(mrb_state *mrb, mrb_value self) {
   mrb_int source_color, dest_color, source_alpha, dest_alpha;
-  mrb_get_args(mrb, "iiii", &source_color, &dest_color, &source_alpha, &dest_alpha);
+  mrb_get_args(mrb, "iiii", &source_color, &dest_color,
+                            &source_alpha, &dest_alpha);
   GPU_SetShapeBlendFunction(source_color, dest_color, source_alpha, dest_alpha);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_shape_blend_equation(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_shape_blend_equation(mrb_state *mrb, mrb_value self) {
   mrb_int color_equation, alpha_equation;
   mrb_get_args(mrb, "ii", &color_equation, &alpha_equation);
   GPU_SetShapeBlendEquation(color_equation, alpha_equation);
@@ -866,8 +847,7 @@ mrb_sdl2_gpu_set_shape_blend_equation(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_shape_blend_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_shape_blend_mode(mrb_state *mrb, mrb_value self) {
   mrb_int mode;
   mrb_get_args(mrb, "i", &mode);
   GPU_SetShapeBlendMode(mode);
@@ -875,8 +855,7 @@ mrb_sdl2_gpu_set_shape_blend_mode(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_line_thickness(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_line_thickness(mrb_state *mrb, mrb_value self) {
   mrb_int thickness;
   float f;
   mrb_get_args(mrb, "i", &thickness);
@@ -885,14 +864,12 @@ mrb_sdl2_gpu_set_line_thickness(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_line_thickness(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_line_thickness(mrb_state *mrb, mrb_value self) {
   return mrb_float_value(mrb, GPU_GetLineThickness());
 }
 
 static mrb_value
-mrb_sdl2_gpu_create_alias_target(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_create_alias_target(mrb_state *mrb, mrb_value self) {
   mrb_value target;
   GPU_Target *t;
   GPU_Target *returnt;
@@ -904,8 +881,7 @@ mrb_sdl2_gpu_create_alias_target(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_load_target(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_load_target(mrb_state *mrb, mrb_value self) {
   mrb_value image;
   GPU_Target *t;
   GPU_Image *i;
@@ -917,8 +893,7 @@ mrb_sdl2_gpu_load_target(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_set_virtual_resolution(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_set_virtual_resolution(mrb_state *mrb, mrb_value self) {
   mrb_value target;
   mrb_int w, h;
   GPU_Target *t;
@@ -930,8 +905,7 @@ mrb_sdl2_gpu_set_virtual_resolution(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_get_virtual_coords(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_get_virtual_coords(mrb_state *mrb, mrb_value self) {
   mrb_value target;
   GPU_Target *t;
   float x, y;
@@ -943,8 +917,7 @@ mrb_sdl2_gpu_get_virtual_coords(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_unset_virtual_resolution(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_unset_virtual_resolution(mrb_state *mrb, mrb_value self) {
   mrb_value target;
   GPU_Target *t;
   mrb_get_args(mrb, "oii", &target);
@@ -954,8 +927,7 @@ mrb_sdl2_gpu_unset_virtual_resolution(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_make_rect(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_make_rect(mrb_state *mrb, mrb_value self) {
   GPU_Rect r;
   mrb_float x, y, w, h;
   mrb_get_args(mrb, "ffff", &x, &y, &w, &h);
@@ -964,8 +936,7 @@ mrb_sdl2_gpu_make_rect(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_make_color(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_make_color(mrb_state *mrb, mrb_value self) {
   mrb_value array;
   SDL_Color c;
   mrb_int r, g, b, a;
@@ -980,8 +951,7 @@ mrb_sdl2_gpu_make_color(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_viewport(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_viewport(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   GPU_Rect *r;
   mrb_value rect;
@@ -993,23 +963,20 @@ mrb_sdl2_gpu_target_set_viewport(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_default_camera(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_default_camera(mrb_state *mrb, mrb_value self) {
   GPU_Camera c = GPU_GetDefaultCamera();
   return mrb_sdl2_gpu_camera(mrb, &c);
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_get_camera(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_get_camera(mrb_state *mrb, mrb_value self) {
   GPU_Target *t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   GPU_Camera c = GPU_GetCamera(t);
   return mrb_sdl2_gpu_camera(mrb, &c);
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_camera(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_camera(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   GPU_Camera *c;
   GPU_Camera resultc;
@@ -1017,14 +984,13 @@ mrb_sdl2_gpu_target_set_camera(mrb_state *mrb, mrb_value self)
   mrb_get_args(mrb, "o", &camera);
   c = mrb_sdl2_gpu_camera_get_ptr(mrb, camera);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
-  
+
   resultc = GPU_SetCamera(t, c);
   return mrb_sdl2_gpu_camera(mrb, &resultc);
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_get_pixel(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_get_pixel(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   mrb_value array;
   SDL_Color c;
@@ -1037,13 +1003,12 @@ mrb_sdl2_gpu_target_get_pixel(mrb_state *mrb, mrb_value self)
   mrb_ary_push(mrb, array, mrb_fixnum_value(c.g));
   mrb_ary_push(mrb, array, mrb_fixnum_value(c.b));
   mrb_ary_push(mrb, array, mrb_fixnum_value(c.a));
-  
+
   return array;
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_clip_rect(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_clip_rect(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   GPU_Rect *r;
   GPU_Rect rectResult;
@@ -1056,8 +1021,7 @@ mrb_sdl2_gpu_target_set_clip_rect(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_clip(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_clip(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   GPU_Rect rectResult;
   mrb_int x, y, w, h;
@@ -1068,16 +1032,14 @@ mrb_sdl2_gpu_target_set_clip(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_unset_clip(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_unset_clip(mrb_state *mrb, mrb_value self) {
   GPU_Target *t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   GPU_UnsetClip(t);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_rgb(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_rgb(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   mrb_int r, g, b;
   mrb_get_args(mrb, "iii", &r, &g, &b);
@@ -1087,8 +1049,7 @@ mrb_sdl2_gpu_target_set_rgb(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_set_rgba(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_set_rgba(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   mrb_int r, g, b, a;
   mrb_get_args(mrb, "iii", &r, &g, &b, &a);
@@ -1098,18 +1059,17 @@ mrb_sdl2_gpu_target_set_rgba(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_unset_color(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_unset_color(mrb_state *mrb, mrb_value self) {
   GPU_Target *t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   GPU_UnsetTargetColor(t);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_free(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_free(mrb_state *mrb, mrb_value self) {
   mrb_sdl2_gpu_target_data_t *data =
-    (mrb_sdl2_gpu_target_data_t*)mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_target_data_type);
+    (mrb_sdl2_gpu_target_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_target_data_type);
   if (NULL != data->target) {
     GPU_FreeTarget(data->target);
     data->target = NULL;
@@ -1118,8 +1078,7 @@ mrb_sdl2_gpu_target_free(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_load_surface(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_load_surface(mrb_state *mrb, mrb_value self) {
   mrb_value filename;
   SDL_Surface *s;
   mrb_get_args(mrb, "S", &filename);
@@ -1128,8 +1087,7 @@ mrb_sdl2_gpu_load_surface(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_save_surface(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_save_surface(mrb_state *mrb, mrb_value self) {
   mrb_value surface, filename;
   mrb_int format;
   SDL_Surface *s;
@@ -1139,14 +1097,14 @@ mrb_sdl2_gpu_save_surface(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_initialize(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_initialize(mrb_state *mrb, mrb_value self) {
   GPU_Image *image = NULL;
   mrb_sdl2_gpu_image_data_t *data =
     (mrb_sdl2_gpu_image_data_t*)DATA_PTR(self);
 
   if (NULL == data) {
-    data = (mrb_sdl2_gpu_image_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_image_data_t));
+    data = (mrb_sdl2_gpu_image_data_t*)
+        mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_image_data_t));
     if (NULL == data) {
       mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
     }
@@ -1182,10 +1140,10 @@ mrb_sdl2_gpu_image_initialize(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_free(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_free(mrb_state *mrb, mrb_value self) {
   mrb_sdl2_gpu_image_data_t *data =
-    (mrb_sdl2_gpu_image_data_t*)mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_image_data_type);
+    (mrb_sdl2_gpu_image_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_image_data_type);
   if (NULL != data->image) {
     GPU_FreeImage(data->image);
     data->image = NULL;
@@ -1194,8 +1152,7 @@ mrb_sdl2_gpu_image_free(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_create_alias(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_create_alias(mrb_state *mrb, mrb_value self) {
   mrb_value image;
   GPU_Image *i;
   GPU_Image *alias;
@@ -1206,8 +1163,7 @@ mrb_sdl2_gpu_image_create_alias(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_copy(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_copy(mrb_state *mrb, mrb_value self) {
   mrb_value image;
   GPU_Image *i;
   GPU_Image *alias;
@@ -1218,8 +1174,7 @@ mrb_sdl2_gpu_image_copy(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_update(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_update(mrb_state *mrb, mrb_value self) {
   mrb_value surface, surface_rect, image_rect;
   SDL_Surface *s;
   GPU_Rect *sr;
@@ -1235,8 +1190,7 @@ mrb_sdl2_gpu_image_update(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_save(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_save(mrb_state *mrb, mrb_value self) {
   mrb_value filename;
   mrb_int format;
   GPU_Image *i;
@@ -1248,15 +1202,13 @@ mrb_sdl2_gpu_image_save(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_generate_mipmaps(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_generate_mipmaps(mrb_state *mrb, mrb_value self) {
   GPU_GenerateMipmaps(mrb_sdl2_gpu_image_get_ptr(mrb, self));
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_rgb(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_rgb(mrb_state *mrb, mrb_value self) {
   mrb_int r, g, b;
   GPU_Image *i;
   mrb_get_args(mrb, "iii", &r, &g, &b);
@@ -1266,8 +1218,7 @@ mrb_sdl2_gpu_image_set_rgb(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_rgba(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_rgba(mrb_state *mrb, mrb_value self) {
   mrb_int r, g, b, a;
   GPU_Image *i;
   mrb_get_args(mrb, "iiii", &r, &g, &b, &a);
@@ -1277,21 +1228,19 @@ mrb_sdl2_gpu_image_set_rgba(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_unset_color(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_unset_color(mrb_state *mrb, mrb_value self) {
   GPU_UnsetColor(mrb_sdl2_gpu_image_get_ptr(mrb, self));
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_get_blending(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(GPU_GetBlending(mrb_sdl2_gpu_image_get_ptr(mrb, self)));
+mrb_sdl2_gpu_image_get_blending(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(
+      GPU_GetBlending(mrb_sdl2_gpu_image_get_ptr(mrb, self)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_blending(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_blending(mrb_state *mrb, mrb_value self) {
   mrb_int blending;
   mrb_get_args(mrb, "i", &blending);
   GPU_SetBlending(mrb_sdl2_gpu_image_get_ptr(mrb, self), blending);
@@ -1299,26 +1248,26 @@ mrb_sdl2_gpu_image_set_blending(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_blend_function(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_blend_function(mrb_state *mrb, mrb_value self) {
   mrb_int source_color, dest_color, source_alpha, dest_alpha;
-  mrb_get_args(mrb, "iiii", &source_color, &dest_color, &source_alpha, &dest_alpha);
-  GPU_SetBlendFunction(mrb_sdl2_gpu_image_get_ptr(mrb, self), source_color, dest_color, source_alpha, dest_alpha);
+  mrb_get_args(mrb, "iiii", &source_color, &dest_color,
+                            &source_alpha, &dest_alpha);
+  GPU_SetBlendFunction(mrb_sdl2_gpu_image_get_ptr(mrb, self),
+                         source_color, dest_color, source_alpha, dest_alpha);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_blend_equation(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_blend_equation(mrb_state *mrb, mrb_value self) {
   mrb_int color_equation, alpha_equation;
   mrb_get_args(mrb, "ii", &color_equation, &alpha_equation);
-  GPU_SetBlendEquation(mrb_sdl2_gpu_image_get_ptr(mrb, self), color_equation, alpha_equation);
+  GPU_SetBlendEquation(
+      mrb_sdl2_gpu_image_get_ptr(mrb, self), color_equation, alpha_equation);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_blend_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_blend_mode(mrb_state *mrb, mrb_value self) {
   mrb_int blend_mode;
   mrb_get_args(mrb, "i", &blend_mode);
   GPU_SetBlendMode(mrb_sdl2_gpu_image_get_ptr(mrb, self), blend_mode);
@@ -1326,8 +1275,7 @@ mrb_sdl2_gpu_image_set_blend_mode(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_filter(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_filter(mrb_state *mrb, mrb_value self) {
   mrb_int filter;
   mrb_get_args(mrb, "i", &filter);
   GPU_SetImageFilter(mrb_sdl2_gpu_image_get_ptr(mrb, self), filter);
@@ -1335,14 +1283,13 @@ mrb_sdl2_gpu_image_set_filter(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_get_snap_mode(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(GPU_GetSnapMode(mrb_sdl2_gpu_image_get_ptr(mrb, self)));
+mrb_sdl2_gpu_image_get_snap_mode(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(
+      GPU_GetSnapMode(mrb_sdl2_gpu_image_get_ptr(mrb, self)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_snap_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_snap_mode(mrb_state *mrb, mrb_value self) {
   mrb_int snap_mode;
   mrb_get_args(mrb, "i", &snap_mode);
   GPU_SetSnapMode(mrb_sdl2_gpu_image_get_ptr(mrb, self), snap_mode);
@@ -1350,48 +1297,55 @@ mrb_sdl2_gpu_image_set_snap_mode(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_wrap_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_wrap_mode(mrb_state *mrb, mrb_value self) {
   mrb_int wrap_mode_x, wrap_mode_y;
   mrb_get_args(mrb, "ii", &wrap_mode_x, &wrap_mode_y);
-  GPU_SetWrapMode(mrb_sdl2_gpu_image_get_ptr(mrb, self), wrap_mode_x, wrap_mode_y);
+  GPU_SetWrapMode(mrb_sdl2_gpu_image_get_ptr(mrb, self),
+                  wrap_mode_x, wrap_mode_y);
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_surface_to_image(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_gpu_image(mrb, GPU_CopyImageFromSurface(mrb_sdl2_video_surface_get_ptr(mrb, self)));
+mrb_sdl2_gpu_surface_to_image(mrb_state *mrb, mrb_value self) {
+  return
+      mrb_sdl2_gpu_image(mrb,
+                         GPU_CopyImageFromSurface(
+                             mrb_sdl2_video_surface_get_ptr(mrb, self)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_to_image(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_gpu_image(mrb, GPU_CopyImageFromTarget(mrb_sdl2_gpu_target_get_ptr(mrb, self)));
+mrb_sdl2_gpu_target_to_image(mrb_state *mrb, mrb_value self) {
+  return
+      mrb_sdl2_gpu_image(mrb,
+                         GPU_CopyImageFromTarget(
+                             mrb_sdl2_gpu_target_get_ptr(mrb, self)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_to_surface(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_video_surface(mrb, GPU_CopySurfaceFromTarget(mrb_sdl2_gpu_target_get_ptr(mrb, self)), false);
+mrb_sdl2_gpu_target_to_surface(mrb_state *mrb, mrb_value self) {
+  return
+      mrb_sdl2_video_surface(mrb,
+                             GPU_CopySurfaceFromTarget(
+                                 mrb_sdl2_gpu_target_get_ptr(mrb, self)),
+                                 false);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_to_surface(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_video_surface(mrb, GPU_CopySurfaceFromImage(mrb_sdl2_gpu_image_get_ptr(mrb, self)), false);
+mrb_sdl2_gpu_image_to_surface(mrb_state *mrb, mrb_value self) {
+  return
+      mrb_sdl2_video_surface(mrb,
+                             GPU_CopySurfaceFromImage(
+                                 mrb_sdl2_gpu_image_get_ptr(mrb, self)), false);
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_clear(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_clear(mrb_state *mrb, mrb_value self) {
   GPU_Clear(mrb_sdl2_gpu_target_get_ptr(mrb, self));
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_clear_rgb(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_clear_rgb(mrb_state *mrb, mrb_value self) {
   mrb_int r, g, b;
   mrb_get_args(mrb, "iii", &r, &g, &b);
   GPU_ClearRGB(mrb_sdl2_gpu_target_get_ptr(mrb, self), r, g, b);
@@ -1399,8 +1353,7 @@ mrb_sdl2_gpu_target_clear_rgb(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_clear_rgba(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_clear_rgba(mrb_state *mrb, mrb_value self) {
   mrb_int r, g, b, a;
   mrb_get_args(mrb, "iii", &r, &g, &b, &a);
   GPU_ClearRGBA(mrb_sdl2_gpu_target_get_ptr(mrb, self), r, g, b, a);
@@ -1408,22 +1361,19 @@ mrb_sdl2_gpu_target_clear_rgba(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_flip(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_flip(mrb_state *mrb, mrb_value self) {
   GPU_Flip(mrb_sdl2_gpu_target_get_ptr(mrb, self));
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_flush_blit_buffer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_flush_blit_buffer(mrb_state *mrb, mrb_value self) {
   GPU_FlushBlitBuffer();
   return mrb_nil_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self) {
   mrb_float x, y;
   mrb_value src_rect, src_image;
   GPU_Target *t;
@@ -1444,14 +1394,16 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self)
     GPU_BlitRotate(i, r, t, x, y, degrees);
   } else if (6 == mrb->c->ci->argc) {
     mrb_float scale_x, scale_y;
-    mrb_get_args(mrb, "ooffff", &src_image, &src_rect, &x, &y, &scale_x, &scale_y);
+    mrb_get_args(mrb, "ooffff", &src_image, &src_rect, &x, &y,
+                 &scale_x, &scale_y);
     t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
     i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
     r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
     GPU_BlitScale(i, r, t, x, y, scale_x, scale_y);
   } else if (7 == mrb->c->ci->argc) {
     mrb_float degrees, scale_x, scale_y;
-    mrb_get_args(mrb, "ooffff", &src_image, &src_rect, &x, &y, &degrees, &scale_x, &scale_y);
+    mrb_get_args(mrb, "ooffff", &src_image, &src_rect, &x, &y,
+                 &degrees, &scale_x, &scale_y);
     t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
     i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
     r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
@@ -1461,395 +1413,386 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self)
 }
 
 static mrb_value
-mrb_sdl2_gpu_rendererid_get_name(mrb_state *mrb, mrb_value self)
-{
-  return mrb_str_new_cstr(mrb, mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)->name);
+mrb_sdl2_gpu_rendererid_get_name(mrb_state *mrb, mrb_value self) {
+  return mrb_str_new_cstr(mrb, mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)
+                          ->name);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rendererid_set_name(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rendererid_set_name(mrb_state *mrb, mrb_value self) {
   mrb_value str;
   mrb_get_args(mrb, "s", &str);
-  return mrb_str_new_cstr(mrb, (mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)->name = RSTRING_PTR(str)));
+  return mrb_str_new_cstr(mrb, (mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)
+                                ->name = RSTRING_PTR(str)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_rendererid_get_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rendererid_get_renderer(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)->renderer);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rendererid_set_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rendererid_set_renderer(mrb_state *mrb, mrb_value self) {
   mrb_int renderer;
   mrb_get_args(mrb, "i", &renderer);
-  return mrb_fixnum_value((mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)->renderer = renderer));
+  return mrb_fixnum_value((mrb_sdl2_gpu_rendererid_get_ptr(mrb, self)
+                           ->renderer = renderer));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_renderer(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_gpu_renderer(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)->renderer));
+mrb_sdl2_gpu_image_renderer(mrb_state *mrb, mrb_value self) {
+  return mrb_sdl2_gpu_renderer(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                                     ->renderer));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_target(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_gpu_target(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)->target));
+mrb_sdl2_gpu_image_target(mrb_state *mrb, mrb_value self) {
+  return mrb_sdl2_gpu_target(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                                   ->target));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_w(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->w);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_h(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->h);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_w(mrb_state *mrb, mrb_value self) {
   mrb_int w;
   mrb_get_args(mrb, "i", &w);
   return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->w = w));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_h(mrb_state *mrb, mrb_value self) {
   mrb_int h;
   mrb_get_args(mrb, "i", &h);
   return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->h = h));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_using_vr(mrb_state *mrb, mrb_value self)
-{
-  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->using_virtual_resolution) ? mrb_true_value() : mrb_false_value();
+mrb_sdl2_gpu_image_using_vr(mrb_state *mrb, mrb_value self) {
+  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)
+          ->using_virtual_resolution) ? mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_using_vr(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_using_vr(mrb_state *mrb, mrb_value self) {
   mrb_bool bool_var;
   mrb_get_args(mrb, "b", &bool_var);
-  return (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->using_virtual_resolution = bool_var)) ? mrb_true_value() : mrb_false_value();
+  return (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                ->using_virtual_resolution = bool_var)) ?
+      mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_base_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_base_w(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->base_w);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_base_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_base_h(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->base_h);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_base_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_base_w(mrb_state *mrb, mrb_value self) {
   mrb_int w;
   mrb_get_args(mrb, "i", &w);
   return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->base_w = w));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_base_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_base_h(mrb_state *mrb, mrb_value self) {
   mrb_int h;
   mrb_get_args(mrb, "i", &h);
   return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->base_h = h));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_format(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_format(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->format);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_format(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_format(mrb_state *mrb, mrb_value self) {
   mrb_int format;
   mrb_get_args(mrb, "i", &format);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->format = format));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->format = format));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_num_layers(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_num_layers(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->num_layers);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_num_layers(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_num_layers(mrb_state *mrb, mrb_value self) {
   mrb_int layers;
   mrb_get_args(mrb, "i", &layers);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->num_layers = layers));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->num_layers = layers));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_bytes_per_pixel(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->bytes_per_pixel);
+mrb_sdl2_gpu_image_bytes_per_pixel(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                          ->bytes_per_pixel);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_bytes_per_pixel(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_bytes_per_pixel(mrb_state *mrb, mrb_value self) {
   mrb_int bpp;
   mrb_get_args(mrb, "i", &bpp);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->bytes_per_pixel = bpp));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->bytes_per_pixel = bpp));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_texture_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_texture_w(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->texture_w);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_texture_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_texture_h(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->texture_h);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_texture_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_texture_w(mrb_state *mrb, mrb_value self) {
   mrb_int w;
   mrb_get_args(mrb, "i", &w);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->texture_w = w));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->texture_w = w));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_texture_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_texture_h(mrb_state *mrb, mrb_value self) {
   mrb_int h;
   mrb_get_args(mrb, "i", &h);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->texture_h = h));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->texture_h = h));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_has_mipmaps(mrb_state *mrb, mrb_value self)
-{
-  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->has_mipmaps) ? mrb_true_value() : mrb_false_value();
+mrb_sdl2_gpu_image_has_mipmaps(mrb_state *mrb, mrb_value self) {
+  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->has_mipmaps) ?
+      mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_has_mipmaps(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_has_mipmaps(mrb_state *mrb, mrb_value self) {
   mrb_bool bool_var;
   mrb_get_args(mrb, "b", &bool_var);
-  return (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->has_mipmaps = bool_var)) ? mrb_true_value() : mrb_false_value();
+  return (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->has_mipmaps =
+                bool_var)) ? mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_use_blending(mrb_state *mrb, mrb_value self)
-{
-  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->use_blending) ? mrb_true_value() : mrb_false_value();
+mrb_sdl2_gpu_image_use_blending(mrb_state *mrb, mrb_value self) {
+  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->
+          use_blending) ? mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_use_blending(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_use_blending(mrb_state *mrb, mrb_value self) {
   mrb_bool bool_var;
   mrb_get_args(mrb, "b", &bool_var);
-  return 0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->use_blending = bool_var) ? mrb_true_value() : mrb_false_value();
+  return 0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->
+               use_blending = bool_var) ? mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_renderer(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_renderer(mrb_state *mrb, mrb_value self) {
   mrb_value renderer;
   mrb_get_args(mrb, "o", &renderer);
-  return mrb_sdl2_gpu_renderer(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)->renderer = 
-				     mrb_sdl2_gpu_renderer_get_ptr(mrb, renderer)));
+  return
+  mrb_sdl2_gpu_renderer(mrb,
+                        (mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                         ->renderer =
+                         mrb_sdl2_gpu_renderer_get_ptr(mrb, renderer)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_target(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_target(mrb_state *mrb, mrb_value self) {
   mrb_value target;
   mrb_get_args(mrb, "o", &target);
-  return mrb_sdl2_gpu_target(mrb, (mrb_sdl2_gpu_image_get_ptr(mrb, self)->target = 
-				   mrb_sdl2_gpu_target_get_ptr(mrb, target)));
+  return
+  mrb_sdl2_gpu_target(mrb,
+                      (mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                       ->target =
+                       mrb_sdl2_gpu_target_get_ptr(mrb, target)));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_is_alias(mrb_state *mrb, mrb_value self)
-{
-  return (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)->is_alias) ? mrb_true_value() : mrb_false_value();
+mrb_sdl2_gpu_image_is_alias(mrb_state *mrb, mrb_value self) {
+  return
+  (0 != mrb_sdl2_gpu_image_get_ptr(mrb, self)
+       ->is_alias) ? mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_is_alias(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_is_alias(mrb_state *mrb, mrb_value self) {
   mrb_bool bool_var;
   mrb_get_args(mrb, "b", &bool_var);
-  return (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->is_alias = bool_var)) ? mrb_true_value() : mrb_false_value();
+  return
+  (0 != (mrb_sdl2_gpu_image_get_ptr(mrb, self)->is_alias = bool_var)) ?
+      mrb_true_value() : mrb_false_value();
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_blend_mode(mrb_state *mrb, mrb_value self)
-{
-  return mrb_sdl2_gpu_blendmode(mrb, &(mrb_sdl2_gpu_image_get_ptr(mrb, self)->blend_mode));
+mrb_sdl2_gpu_image_blend_mode(mrb_state *mrb, mrb_value self) {
+  return
+  mrb_sdl2_gpu_blendmode(mrb,
+                         &(mrb_sdl2_gpu_image_get_ptr(mrb, self)->blend_mode));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_filter_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_filter_mode(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->filter_mode);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_filter_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_filter_mode(mrb_state *mrb, mrb_value self) {
   mrb_int filter_mode;
   mrb_get_args(mrb, "i", &filter_mode);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->filter_mode = filter_mode));
+  return
+      mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                        ->filter_mode = filter_mode));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_snap_mode(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_snap_mode(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->snap_mode);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_wrap_mode_x(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_wrap_mode_x(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->wrap_mode_x);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_wrap_mode_x(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_wrap_mode_x(mrb_state *mrb, mrb_value self) {
   mrb_int mode;
   mrb_get_args(mrb, "i", &mode);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->wrap_mode_x = mode));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->wrap_mode_x = mode));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_wrap_mode_y(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_wrap_mode_y(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->wrap_mode_y);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_wrap_mode_y(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_wrap_mode_y(mrb_state *mrb, mrb_value self) {
   mrb_int mode;
   mrb_get_args(mrb, "i", &mode);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->wrap_mode_y = mode));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->wrap_mode_y = mode));
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_refcount(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_refcount(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_image_get_ptr(mrb, self)->refcount);
 }
 
 static mrb_value
-mrb_sdl2_gpu_image_set_refcount(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_image_set_refcount(mrb_state *mrb, mrb_value self) {
   mrb_int refcount;
   mrb_get_args(mrb, "i", &refcount);
-  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)->refcount = refcount));
+  return mrb_fixnum_value((mrb_sdl2_gpu_image_get_ptr(mrb, self)
+                           ->refcount = refcount));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_source_color(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->source_color);
+mrb_sdl2_gpu_blendmode_source_color(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->source_color);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_source_color(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_source_color(mrb_state *mrb, mrb_value self) {
   mrb_int color;
   mrb_get_args(mrb, "i", &color);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->source_color = color));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->source_color = color));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_source_alpha(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->source_alpha);
+mrb_sdl2_gpu_blendmode_source_alpha(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->source_alpha);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_source_alpha(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_source_alpha(mrb_state *mrb, mrb_value self) {
   mrb_int alpha;
   mrb_get_args(mrb, "i", &alpha);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->source_alpha = alpha));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->source_alpha = alpha));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_dest_color(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->dest_color);
+mrb_sdl2_gpu_blendmode_dest_color(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->dest_color);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_dest_color(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_dest_color(mrb_state *mrb, mrb_value self) {
   mrb_int color;
   mrb_get_args(mrb, "i", &color);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->dest_color = color));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->dest_color = color));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_dest_alpha(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->dest_alpha);
+mrb_sdl2_gpu_blendmode_dest_alpha(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->dest_alpha);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_dest_alpha(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_dest_alpha(mrb_state *mrb, mrb_value self) {
   mrb_int alpha;
   mrb_get_args(mrb, "i", &alpha);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->dest_alpha = alpha));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->dest_alpha = alpha));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_color_equation(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->color_equation);
+mrb_sdl2_gpu_blendmode_color_equation(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->color_equation);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_color_equation(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_color_equation(mrb_state *mrb, mrb_value self) {
   mrb_int color_equation;
   mrb_get_args(mrb, "i", &color_equation);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->color_equation = color_equation));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->color_equation = color_equation));
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_alpha_equation(mrb_state *mrb, mrb_value self)
-{
-  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->alpha_equation);
+mrb_sdl2_gpu_blendmode_alpha_equation(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                          ->alpha_equation);
 }
 
 static mrb_value
-mrb_sdl2_gpu_blendmode_set_alpha_equation(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_blendmode_set_alpha_equation(mrb_state *mrb, mrb_value self) {
   mrb_int alpha_equation;
   mrb_get_args(mrb, "i", &alpha_equation);
-  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)->alpha_equation = alpha_equation));
+  return mrb_fixnum_value((mrb_sdl2_gpu_blendmode_get_ptr(mrb, self)
+                           ->alpha_equation = alpha_equation));
 }
 
 static mrb_value
@@ -1859,7 +1802,8 @@ mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
   mrb_sdl2_gpu_rect_data_t *data =
     (mrb_sdl2_gpu_rect_data_t*)DATA_PTR(self);
   if (data == NULL) {
-    data = (mrb_sdl2_gpu_rect_data_t*)mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
+    data = (mrb_sdl2_gpu_rect_data_t*)
+        mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_rect_data_t));
     if (NULL == data) {
       mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
     }
@@ -1905,57 +1849,49 @@ mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_get_x(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_get_x(mrb_state *mrb, mrb_value self) {
   GPU_Rect *r = mrb_sdl2_gpu_rect_get_ptr(mrb, self);
   return mrb_fixnum_value(r->x);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_get_y(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_get_y(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_get_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_get_w(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_get_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_get_h(mrb_state *mrb, mrb_value self) {
   return mrb_fixnum_value(mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h);
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_set_x(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_set_x(mrb_state *mrb, mrb_value self) {
   mrb_int x;
   mrb_get_args(mrb, "i", &x);
   return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->x = x));
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_set_y(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_set_y(mrb_state *mrb, mrb_value self) {
   mrb_float y;
   mrb_get_args(mrb, "f", &y);
   return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->y = y));
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_set_w(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_set_w(mrb_state *mrb, mrb_value self) {
   mrb_float w;
   mrb_get_args(mrb, "f", &w);
   return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->w = w));
 }
 
 static mrb_value
-mrb_sdl2_gpu_rect_set_h(mrb_state *mrb, mrb_value self)
-{
+mrb_sdl2_gpu_rect_set_h(mrb_state *mrb, mrb_value self) {
   mrb_float h;
   mrb_get_args(mrb, "f", &h);
   return mrb_fixnum_value((mrb_sdl2_gpu_rect_get_ptr(mrb, self)->h = h));
@@ -1978,15 +1914,15 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   class_Image       = mrb_define_class_under(mrb, mod_GPU,   "Image",       mrb->object_class);
   class_MatrixStack = mrb_define_class_under(mrb, mod_GPU,   "MatrixStack", mrb->object_class);
 
-  MRB_SET_INSTANCE_TT(class_Rect,  MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Surface, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_RendererID, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Renderer, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Context, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Camera, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_BlendMode,  MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Image,  MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_MatrixStack,  MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Rect,        MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Surface,     MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_RendererID,  MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Renderer,    MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Context,     MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Camera,      MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_BlendMode,   MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Image,       MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_MatrixStack, MRB_TT_DATA);
 
   /**************************************************************************
    * Initialization 
@@ -2341,13 +2277,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_const(mrb, mod_GPU, "GPU_DEBUG_LEVEL_3",   mrb_fixnum_value(GPU_DEBUG_LEVEL_3));
   mrb_define_const(mrb, mod_GPU, "GPU_DEBUG_LEVEL_MAX", mrb_fixnum_value(GPU_DEBUG_LEVEL_MAX));
   mrb_gc_arena_restore(mrb, arena_size);
-
-
-
-
-
 }
 
 void mrb_mruby_sdl2_gpu_gem_final(mrb_state *mrb) {
-
 }
