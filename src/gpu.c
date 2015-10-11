@@ -1115,7 +1115,6 @@ mrb_sdl2_gpu_image_initialize(mrb_state *mrb, mrb_value self) {
     }
     data->image = NULL;
   }
-
   if (1 == mrb->c->ci->argc) {
     mrb_value str;
     mrb_get_args(mrb, "S", &str);
@@ -1855,7 +1854,7 @@ mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
 
   DATA_PTR(self) = data;
   DATA_TYPE(self) = &mrb_sdl2_gpu_rect_data_type;
-  
+
   return self;
 }
 
@@ -2099,67 +2098,65 @@ mrb_sdl2_gpu_target_tri_filled(mrb_state *mrb, mrb_value self) {
 
 static mrb_value
 mrb_sdl2_gpu_target_rect(mrb_state *mrb, mrb_value self) {
-  mrb_value *args;
-  mrb_int argc;
+  mrb_float x1, y1, x2, y2;
+  mrb_int   r, g, b, a;
   GPU_Target *t = NULL;
-  mrb_get_args(mrb, "*", &args, &argc);
+  mrb_get_args(mrb, "ffffiiii", &x1, &y1, &x2, &y2, &r, &g, &b, &a);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
 
   if (NULL == t)
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Target's ptr");
-  if (8 == argc) {
-    mrb_float x1 = mrb_float(args[0]),
-              y1 = mrb_float(args[1]),
-              x2 = mrb_float(args[2]),
-              y2 = mrb_float(args[3]);
-    mrb_int r = mrb_fixnum(args[4]),
-            g = mrb_fixnum(args[5]),
-            b = mrb_fixnum(args[6]),
-            a = mrb_fixnum(args[7]);
-    GPU_Rectangle(t, x1, y1, x2, y2, (SDL_Color) {r, g, b, a});
-  } else if (5 == argc) {
-    mrb_int r = mrb_fixnum(args[1]),
-            g = mrb_fixnum(args[2]),
-            b = mrb_fixnum(args[3]),
-            a = mrb_fixnum(args[4]);
-    GPU_Rect *re = mrb_sdl2_gpu_rect_get_ptr(mrb, args[0]);
-    GPU_Rectangle2(t, *re, (SDL_Color) {r, g, b, a});
-  } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, "unexpected arguments");
-  }
+
+  GPU_Rectangle(t, x1, y1, x2, y2, (SDL_Color) {r, g, b, a});
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_target_rect2(mrb_state *mrb, mrb_value self) {
+  mrb_value rect;
+  mrb_int   r, g, b, a;
+  GPU_Target *t = NULL;
+  GPU_Rect *re;
+  mrb_get_args(mrb, "oiiii", &rect, &r, &g, &b, &a);
+  t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
+  re = mrb_sdl2_gpu_rect_get_ptr(mrb, rect);
+  if (NULL == t)
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Target's ptr");
+  if (NULL == re)
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Rect's ptr");
+  GPU_Rectangle2(t, *re, (SDL_Color) {r, g, b, a});
   return self;
 }
 
 static mrb_value
 mrb_sdl2_gpu_target_rect_filled(mrb_state *mrb, mrb_value self) {
-  mrb_value *args;
-  mrb_int argc;
+  mrb_float x1, y1, x2, y2;
+  mrb_int   r, g, b, a;
   GPU_Target *t = NULL;
-  mrb_get_args(mrb, "*", &args, &argc);
+  mrb_get_args(mrb, "ffffiiii", &x1, &y1, &x2, &y2, &r, &g, &b, &a);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
 
   if (NULL == t)
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Target's ptr");
-  if (8 == argc) {
-    mrb_float x1 = mrb_float(args[0]),
-              y1 = mrb_float(args[1]),
-              x2 = mrb_float(args[2]),
-              y2 = mrb_float(args[3]);
-    mrb_int r = mrb_fixnum(args[4]),
-            g = mrb_fixnum(args[5]),
-            b = mrb_fixnum(args[6]),
-            a = mrb_fixnum(args[7]);
-    GPU_RectangleFilled(t, x1, y1, x2, y2, (SDL_Color) {r, g, b, a});
-  } else if (5 == argc) {
-    mrb_int r = mrb_fixnum(args[1]),
-            g = mrb_fixnum(args[2]),
-            b = mrb_fixnum(args[3]),
-            a = mrb_fixnum(args[4]);
-    GPU_Rect *re = mrb_sdl2_gpu_rect_get_ptr(mrb, args[0]);
-    GPU_RectangleFilled2(t, *re, (SDL_Color) {r, g, b, a});
-  } else {
-    mrb_raise(mrb, E_ARGUMENT_ERROR, "unexpected arguments");
-  }
+
+  GPU_RectangleFilled(t, x1, y1, x2, y2, (SDL_Color) {r, g, b, a});
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_target_rect_filled2(mrb_state *mrb, mrb_value self) {
+  mrb_value rect;
+  mrb_int   r, g, b, a;
+  GPU_Target *t = NULL;
+  GPU_Rect *re;
+  mrb_get_args(mrb, "oiiii", &rect, &r, &g, &b, &a);
+  t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
+  re = mrb_sdl2_gpu_rect_get_ptr(mrb, rect);
+  if (NULL == t)
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Target's ptr");
+  if (NULL == re)
+    mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Rect's ptr");
+  GPU_RectangleFilled2(t, *re, (SDL_Color) {r, g, b, a});
   return self;
 }
 
@@ -2433,8 +2430,10 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Target, "sector_filled",     mrb_sdl2_gpu_target_sector_filled,     MRB_ARGS_REQ(10));
   mrb_define_method(mrb, class_Target, "tri",               mrb_sdl2_gpu_target_tri,               MRB_ARGS_REQ(10));
   mrb_define_method(mrb, class_Target, "tri_filled",        mrb_sdl2_gpu_target_tri_filled,        MRB_ARGS_REQ(10));
-  mrb_define_method(mrb, class_Target, "rect",              mrb_sdl2_gpu_target_rect,              MRB_ARGS_REQ(5) | MRB_ARGS_OPT(3));
-  mrb_define_method(mrb, class_Target, "rect_filled",       mrb_sdl2_gpu_target_rect_filled,       MRB_ARGS_REQ(5) | MRB_ARGS_OPT(3));
+  mrb_define_method(mrb, class_Target, "rect",              mrb_sdl2_gpu_target_rect2,             MRB_ARGS_REQ(5));
+  mrb_define_method(mrb, class_Target, "rect_filled",       mrb_sdl2_gpu_target_rect_filled2,      MRB_ARGS_REQ(5));
+  mrb_define_method(mrb, class_Target, "rect",              mrb_sdl2_gpu_target_rect,              MRB_ARGS_REQ(8));
+  mrb_define_method(mrb, class_Target, "rect_filled",       mrb_sdl2_gpu_target_rect_filled,       MRB_ARGS_REQ(8));
   mrb_define_method(mrb, class_Target, "rect_round",        mrb_sdl2_gpu_target_rect_round,        MRB_ARGS_REQ(6) | MRB_ARGS_OPT(3));
   mrb_define_method(mrb, class_Target, "rect_round_filled", mrb_sdl2_gpu_target_rect_round_filled, MRB_ARGS_REQ(6) | MRB_ARGS_OPT(3));
   // TBD - GPU_Polygon - array of floats involved
