@@ -1431,13 +1431,27 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self) {
   } else if (7 == mrb->c->ci->argc) {
     mrb_float degrees, scale_x, scale_y;
     mrb_get_args(mrb, "ooffff", &src_image, &src_rect, &x, &y,
-                                &degrees, &scale_x, &scale_y);
+                                &scale_x, &scale_y, &degrees);
     t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
     i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
     r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
     GPU_BlitTransform(i, r, t, x, y, degrees, scale_x, scale_y);
+  } else if (9 == mrb->c->ci->argc) {
+    mrb_float pivot_x, pivot_y, degrees, scaleX, scaleY;
+    mrb_get_args(mrb, "oofffffff", &src_image, &src_rect, &x, &y,
+                                   &scaleX, &scaleY, &degrees,
+                                   &pivot_x, &pivot_y);
+    t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
+    i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
+    r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
+    GPU_BlitTransformX(i, r, t, x, y, pivot_x, pivot_y,
+                       degrees, scaleX, scaleY);
+  } else {
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Incorrect number of arguments, expected 4, 5, 6 or 7 arguments");
   }
-  return mrb_nil_value();
+
+  return self;
 }
 
 static mrb_value
@@ -2374,7 +2388,6 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_module_function(mrb, mod_GPU, "renderer_id",              mrb_sdl2_gpu_get_renderer_id,              MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, mod_GPU, "renderer_by_index",        mrb_sdl2_gpu_get_renderer_index,           MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, mod_GPU, "num_registered_renderers", mrb_sdl2_gpu_get_num_registered_renderers, MRB_ARGS_NONE());
-  // TBD add the last 2 functions
 
 
   /***************************************************************************
