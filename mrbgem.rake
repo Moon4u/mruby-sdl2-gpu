@@ -7,7 +7,7 @@ MRuby::Gem::Specification.new('mruby-sdl2-gpu') do |spec|
   spec.cc.flags << '-I/usr/local/lib/include/'
   spec.cc.flags << '-I/usr/include/'
   spec.cc.flags << '-I/usr/include/x86_64-linux-gnu/'
-  spec.linker.flags_before_libraries << '-L/usr/local/lib/lib -lSDL2_gpu'
+  spec.linker.flags_before_libraries << '-L/usr/local/lib -lSDL2_gpu'
   spec.linker.flags_before_libraries << '-L/usr/lib/x86_64-linux-gnu/ -lGLEW'
   spec.linker.flags_before_libraries << '`sdl2-config --libs`'
 end

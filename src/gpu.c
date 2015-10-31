@@ -20,7 +20,7 @@
 #include "../include/sdl2_render.h"
 
 #include "glew/GL/glew.h"
-#include "../src/gpu.h"
+#include "../include/gpu.h"
 
 struct RClass *mod_GPU                              = NULL;
 // classes in mruby
@@ -228,8 +228,8 @@ mrb_sdl2_gpu_image(mrb_state *mrb, GPU_Image *image) {
   mrb_sdl2_gpu_image_data_t *data =
     (mrb_sdl2_gpu_image_data_t*)
       mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_image_data_t));
-  if (NULL != data) {
-    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory for Image.");
   }
   data->image = image;
   return mrb_obj_value(
