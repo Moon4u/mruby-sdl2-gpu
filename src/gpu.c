@@ -2557,18 +2557,18 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_RendererID, "renderer=", mrb_sdl2_gpu_rendererid_set_renderer, MRB_ARGS_NONE());
 
   /*********************** GPU_BlendMode ******************************************************************************/
-  mrb_define_method(mrb, class_BlendMode, "source_color",   mrb_sdl2_gpu_blendmode_source_color,       MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "source_color=",  mrb_sdl2_gpu_blendmode_set_source_color,   MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_BlendMode, "source_alpha",   mrb_sdl2_gpu_blendmode_source_alpha,       MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "source_alpha=",  mrb_sdl2_gpu_blendmode_set_source_alpha,   MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_BlendMode, "dest_color",     mrb_sdl2_gpu_blendmode_dest_color,         MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "dest_color=",    mrb_sdl2_gpu_blendmode_set_dest_color,     MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha",     mrb_sdl2_gpu_blendmode_dest_alpha,         MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha=",    mrb_sdl2_gpu_blendmode_set_dest_alpha,     MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha",     mrb_sdl2_gpu_blendmode_color_equation,     MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha=",    mrb_sdl2_gpu_blendmode_set_color_equation, MRB_ARGS_REQ(1));
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha",     mrb_sdl2_gpu_blendmode_alpha_equation,     MRB_ARGS_NONE());
-  mrb_define_method(mrb, class_BlendMode, "dest_alpha=",    mrb_sdl2_gpu_blendmode_set_alpha_equation, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "source_color",    mrb_sdl2_gpu_blendmode_source_color,       MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "source_color=",   mrb_sdl2_gpu_blendmode_set_source_color,   MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "source_alpha",    mrb_sdl2_gpu_blendmode_source_alpha,       MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "source_alpha=",   mrb_sdl2_gpu_blendmode_set_source_alpha,   MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "dest_color",      mrb_sdl2_gpu_blendmode_dest_color,         MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "dest_color=",     mrb_sdl2_gpu_blendmode_set_dest_color,     MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "dest_alpha",      mrb_sdl2_gpu_blendmode_dest_alpha,         MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "dest_alpha=",     mrb_sdl2_gpu_blendmode_set_dest_alpha,     MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "color_equation",  mrb_sdl2_gpu_blendmode_color_equation,     MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "color_equation=", mrb_sdl2_gpu_blendmode_set_color_equation, MRB_ARGS_REQ(1));
+  mrb_define_method(mrb, class_BlendMode, "alpha_equation",  mrb_sdl2_gpu_blendmode_alpha_equation,     MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_BlendMode, "alpha_equation=", mrb_sdl2_gpu_blendmode_set_alpha_equation, MRB_ARGS_REQ(1));
 
   /*********************** GPU_Image *****************************************************************************/
   mrb_define_method(mrb, class_Image, "renderer",         mrb_sdl2_gpu_image_renderer,            MRB_ARGS_NONE());
