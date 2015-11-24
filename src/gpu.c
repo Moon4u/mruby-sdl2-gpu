@@ -2926,6 +2926,14 @@ mrb_sdl2_gpu_set_uniformui(mrb_state *mrb, mrb_value self) {
 }
 
 static mrb_value
+mrb_sdl2_gpu_set_uniformi(mrb_state *mrb, mrb_value self) {
+  mrb_int location, value;
+  mrb_get_args(mrb, "ii", &location, &value);
+  GPU_SetUniformi(location, value);
+  return self;
+}
+
+static mrb_value
 mrb_sdl2_gpu_set_uniformuiv(mrb_state *mrb, mrb_value self) {
   mrb_int location, num_elements_per_value, num_values;
   mrb_value values;
@@ -3106,18 +3114,20 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   class_Attribute       = mrb_define_class_under(mrb, mod_GPU,   "Attribute",       mrb->object_class);
   class_AttributeFormat = mrb_define_class_under(mrb, mod_GPU,   "AttributeFormat", mrb->object_class);
 
-  MRB_SET_INSTANCE_TT(class_Rect,        MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Surface,     MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_RendererID,  MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Renderer,    MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Context,     MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Camera,      MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_BlendMode,   MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Image,       MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_MatrixStack, MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Shader,      MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_Program,     MRB_TT_DATA);
-  MRB_SET_INSTANCE_TT(class_ShaderBlock, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Rect,            MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Surface,         MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_RendererID,      MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Renderer,        MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Context,         MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Camera,          MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_BlendMode,       MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Image,           MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_MatrixStack,     MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Shader,          MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Program,         MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_ShaderBlock,     MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Attribute,       MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_AttributeFormat, MRB_TT_DATA);
 
   /**************************************************************************
    * Initialization 
@@ -3316,7 +3326,8 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Program, "get_uniformuiv",         mrb_sdl2_gpu_program_get_uniformuiv,    MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Program, "get_uniformfv",          mrb_sdl2_gpu_program_get_uniformfv,     MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Program, "get_uniform_matrix_fv",  mrb_sdl2_gpu_program_get_umfv,          MRB_ARGS_NONE());
-  
+
+  mrb_define_module_function(mrb, mod_GPU, "set_uniformi",          mrb_sdl2_gpu_set_uniformi,     MRB_ARGS_NONE());
   mrb_define_module_function(mrb, mod_GPU, "set_uniformui",         mrb_sdl2_gpu_set_uniformui,    MRB_ARGS_NONE());
   mrb_define_module_function(mrb, mod_GPU, "set_uniformuiv",        mrb_sdl2_gpu_set_uniformuiv,   MRB_ARGS_NONE());
   mrb_define_module_function(mrb, mod_GPU, "set_uniformf",          mrb_sdl2_gpu_set_uniformf,     MRB_ARGS_NONE());
@@ -3499,6 +3510,13 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_const(mrb, mod_GPU, "GPU_SNAP_POSITION",                mrb_fixnum_value(GPU_SNAP_POSITION));
   mrb_define_const(mrb, mod_GPU, "GPU_SNAP_DIMENSIONS",              mrb_fixnum_value(GPU_SNAP_DIMENSIONS));
   mrb_define_const(mrb, mod_GPU, "GPU_SNAP_POSITION_AND_DIMENSIONS", mrb_fixnum_value(GPU_SNAP_POSITION_AND_DIMENSIONS));
+  mrb_gc_arena_restore(mrb, arena_size);
+
+  arena_size = mrb_gc_arena_save(mrb);
+  mrb_define_const(mrb, mod_GPU, "GPU_VERTEX_SHADER",   mrb_fixnum_value(GPU_VERTEX_SHADER));
+  mrb_define_const(mrb, mod_GPU, "GPU_FRAGMENT_SHADER", mrb_fixnum_value(GPU_FRAGMENT_SHADER));
+  mrb_define_const(mrb, mod_GPU, "GPU_PIXEL_SHADER",    mrb_fixnum_value(GPU_PIXEL_SHADER));
+  mrb_define_const(mrb, mod_GPU, "GPU_GEOMETRY_SHADER", mrb_fixnum_value(GPU_GEOMETRY_SHADER));
   mrb_gc_arena_restore(mrb, arena_size);
 
   arena_size = mrb_gc_arena_save(mrb);
