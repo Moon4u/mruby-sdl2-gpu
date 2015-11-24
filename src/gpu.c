@@ -18,11 +18,12 @@
 // mruby-sdl2 related includes
 #include "../include/sdl2_surface.h"
 #include "../include/sdl2_render.h"
+#include "../include/sdl2_rwops.h"
 
 #include "glew/GL/glew.h"
 #include "../include/gpu.h"
 
-struct RClass *mod_GPU                              = NULL;
+struct RClass *mod_GPU               = NULL;
 // classes in mruby
 struct RClass *class_Target          = NULL;
 struct RClass *class_RendererID      = NULL;
@@ -33,6 +34,12 @@ struct RClass *class_BlendMode       = NULL;
 struct RClass *class_Rect            = NULL;
 struct RClass *class_Image           = NULL;
 struct RClass *class_MatrixStack     = NULL;
+struct RClass *class_Shader          = NULL;
+struct RClass *class_Program         = NULL;
+struct RClass *class_ShaderBlock     = NULL;
+struct RClass *class_Attribute       = NULL;
+struct RClass *class_AttributeFormat = NULL;
+
 
 /*********************************
  * GPU_Target bindings starts here
@@ -49,6 +56,7 @@ mrb_sdl2_gpu_target_data_free(mrb_state *mrb, void *p) {
   if (NULL != data->target) {
     GPU_FreeTarget(data->target);
   }
+  mrb_free(mrb, data);
 }
 
 static struct mrb_data_type const mrb_sdl2_gpu_target_data_type = {
@@ -82,6 +90,277 @@ mrb_sdl2_gpu_target(mrb_state *mrb, GPU_Target *target) {
 }
 /*******************************
  * GPU_Target bindings ends here
+ *******************************/
+
+/*********************************
+ * Shaders bindings starts here
+ *********************************/
+
+typedef struct mrb_sdl2_gpu_shader_data_t {
+  Uint32 shaderid;
+} mrb_sdl2_gpu_shader_data_t;
+
+static void
+mrb_sdl2_gpu_shader_data_free(mrb_state *mrb, void *p) {
+  mrb_sdl2_gpu_shader_data_t *data =
+    (mrb_sdl2_gpu_shader_data_t*)p;
+  if (NULL != data) {
+    if (0 != data->shaderid) {
+      GPU_FreeShader(data->shaderid);
+    }
+    mrb_free(mrb, data);
+  }
+}
+
+static struct mrb_data_type const mrb_sdl2_gpu_shader_data_type = {
+  "Shader", mrb_sdl2_gpu_shader_data_free
+};
+
+Uint32
+mrb_sdl2_gpu_shader_get_uint32(mrb_state *mrb, mrb_value shaderid) {
+  mrb_sdl2_gpu_shader_data_t *data;
+  if (mrb_nil_p(shaderid)) {
+    return 0;
+  }
+  data =
+    (mrb_sdl2_gpu_shader_data_t*)
+      mrb_data_get_ptr(mrb, shaderid, &mrb_sdl2_gpu_shader_data_type);
+  return data->shaderid;
+}
+
+
+mrb_value
+mrb_sdl2_gpu_shader(mrb_state *mrb, Uint32 shaderid) {
+  mrb_sdl2_gpu_shader_data_t *data =
+    (mrb_sdl2_gpu_shader_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_shader_data_t));
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  }
+  data->shaderid = shaderid;
+  return mrb_obj_value(
+  Data_Wrap_Struct(mrb, class_Shader, &mrb_sdl2_gpu_shader_data_type, data));
+}
+/*******************************
+ * Shader bindings ends here
+ *******************************/
+
+/*********************************
+ * Program bindings starts here
+ *********************************/
+
+typedef struct mrb_sdl2_gpu_program_data_t {
+  Uint32 programid;
+} mrb_sdl2_gpu_program_data_t;
+
+static void
+mrb_sdl2_gpu_program_data_free(mrb_state *mrb, void *p) {
+  mrb_sdl2_gpu_program_data_t *data =
+    (mrb_sdl2_gpu_program_data_t*)p;
+  if (0 != data->programid) {
+    GPU_FreeShaderProgram(data->programid);
+  }
+  mrb_free(mrb, data);
+}
+
+static struct mrb_data_type const mrb_sdl2_gpu_program_data_type = {
+  "Program", mrb_sdl2_gpu_program_data_free
+};
+
+Uint32
+mrb_sdl2_gpu_program_get_uint32(mrb_state *mrb, mrb_value programid) {
+  mrb_sdl2_gpu_program_data_t *data;
+  if (mrb_nil_p(programid)) {
+    return 0;
+  }
+  data =
+    (mrb_sdl2_gpu_program_data_t*)
+      mrb_data_get_ptr(mrb, programid, &mrb_sdl2_gpu_program_data_type);
+  return data->programid;
+}
+
+
+mrb_value
+mrb_sdl2_gpu_program(mrb_state *mrb, Uint32 programid) {
+  mrb_sdl2_gpu_program_data_t *data =
+    (mrb_sdl2_gpu_program_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_program_data_t));
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  }
+  data->programid = programid;
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb,
+                       class_Program,
+                       &mrb_sdl2_gpu_program_data_type,
+                       data));
+}
+/*******************************
+ * Program bindings ends here
+ *******************************/
+
+/*********************************
+ * GPU_AttributeFormat bindings starts here
+ *********************************/
+
+typedef struct mrb_sdl2_gpu_attributeformat_data_t {
+  GPU_AttributeFormat attributeformat;
+} mrb_sdl2_gpu_attributeformat_data_t;
+
+static void
+mrb_sdl2_gpu_attributeformat_data_free(mrb_state *mrb, void *p) {
+  mrb_sdl2_gpu_attributeformat_data_t *data =
+    (mrb_sdl2_gpu_attributeformat_data_t*)p;
+  if (NULL != data) {
+    mrb_free(mrb, data);
+  }
+}
+
+static struct mrb_data_type const mrb_sdl2_gpu_attributeformat_data_type = {
+  "AttributeFormat", mrb_sdl2_gpu_attributeformat_data_free
+};
+
+GPU_AttributeFormat *
+mrb_sdl2_gpu_attributeformat_get_ptr(mrb_state *mrb,
+                                     mrb_value attributeformat) {
+  mrb_sdl2_gpu_attributeformat_data_t *data;
+  if (mrb_nil_p(attributeformat)) {
+    return NULL;
+  }
+  data =
+    (mrb_sdl2_gpu_attributeformat_data_t*)
+      mrb_data_get_ptr(mrb,
+                       attributeformat,
+                       &mrb_sdl2_gpu_attributeformat_data_type);
+  return &data->attributeformat;
+}
+
+mrb_value
+mrb_sdl2_gpu_attributeformat(mrb_state *mrb,
+                             GPU_AttributeFormat attributeformat) {
+  mrb_sdl2_gpu_attributeformat_data_t *data =
+    (mrb_sdl2_gpu_attributeformat_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_attributeformat_data_t));
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  }
+  data->attributeformat.is_per_sprite = attributeformat.is_per_sprite;
+  data->attributeformat.num_elems_per_value =
+      attributeformat.num_elems_per_value;
+  data->attributeformat.type = attributeformat.type;
+  data->attributeformat.normalize = attributeformat.normalize;
+  data->attributeformat.stride_bytes = attributeformat.stride_bytes;
+  data->attributeformat.offset_bytes = attributeformat.offset_bytes;
+  return mrb_obj_value(
+      Data_Wrap_Struct(mrb, class_AttributeFormat,
+                       &mrb_sdl2_gpu_attributeformat_data_type, data));
+}
+/*******************************
+ * GPU_AttributeFormat bindings ends here
+ *******************************/
+
+/*********************************
+ * GPU_Attribute bindings starts here
+ *********************************/
+
+typedef struct mrb_sdl2_gpu_attribute_data_t {
+  GPU_Attribute *attribute;
+} mrb_sdl2_gpu_attribute_data_t;
+
+static void
+mrb_sdl2_gpu_attribute_data_free(mrb_state *mrb, void *p) {
+  mrb_sdl2_gpu_attribute_data_t *data =
+    (mrb_sdl2_gpu_attribute_data_t*)p;
+  if (NULL != data->attribute) {
+    mrb_free(mrb, (void *) data->attribute);
+  }
+  mrb_free(mrb, data);
+}
+
+static struct mrb_data_type const mrb_sdl2_gpu_attribute_data_type = {
+  "Attribute", mrb_sdl2_gpu_attribute_data_free
+};
+
+GPU_Attribute *
+mrb_sdl2_gpu_attribute_get_ptr(mrb_state *mrb, mrb_value attribute) {
+  mrb_sdl2_gpu_attribute_data_t *data;
+  if (mrb_nil_p(attribute)) {
+    return NULL;
+  }
+  data =
+    (mrb_sdl2_gpu_attribute_data_t*)
+      mrb_data_get_ptr(mrb, attribute, &mrb_sdl2_gpu_attribute_data_type);
+  return data->attribute;
+}
+
+mrb_value
+mrb_sdl2_gpu_attribute(mrb_state *mrb, GPU_Attribute *attribute) {
+  mrb_sdl2_gpu_attribute_data_t *data =
+    (mrb_sdl2_gpu_attribute_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_attribute_data_t));
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  }
+  data->attribute = attribute;
+  return mrb_obj_value(
+  Data_Wrap_Struct(mrb, class_Attribute,
+                   &mrb_sdl2_gpu_attribute_data_type, data));
+}
+/*******************************
+ * GPU_Attribute bindings ends here
+ *******************************/
+
+/*********************************
+ * GPU_ShaderBlock bindings starts here
+ *********************************/
+
+typedef struct mrb_sdl2_gpu_shaderblock_data_t {
+  GPU_ShaderBlock shaderblock;
+} mrb_sdl2_gpu_shaderblock_data_t;
+
+static void
+mrb_sdl2_gpu_shaderblock_data_free(mrb_state *mrb, void *p) {
+  mrb_sdl2_gpu_shaderblock_data_t *data =
+    (mrb_sdl2_gpu_shaderblock_data_t*)p;
+  if (NULL != data)
+    mrb_free(mrb, data);
+}
+
+static struct mrb_data_type const mrb_sdl2_gpu_shaderblock_data_type = {
+  "ShaderBlock", mrb_sdl2_gpu_shaderblock_data_free
+};
+
+GPU_ShaderBlock *
+mrb_sdl2_gpu_shaderblock_get_ptr(mrb_state *mrb, mrb_value shaderblock) {
+  mrb_sdl2_gpu_shaderblock_data_t *data;
+  if (mrb_nil_p(shaderblock)) {
+    return NULL;
+  }
+  data =
+    (mrb_sdl2_gpu_shaderblock_data_t*)
+      mrb_data_get_ptr(mrb, shaderblock, &mrb_sdl2_gpu_shaderblock_data_type);
+  return &data->shaderblock;
+}
+
+mrb_value
+mrb_sdl2_gpu_shaderblock(mrb_state *mrb, GPU_ShaderBlock shaderblock) {
+  mrb_sdl2_gpu_shaderblock_data_t *data =
+    (mrb_sdl2_gpu_shaderblock_data_t*)
+      mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_shaderblock_data_t));
+  if (NULL == data) {
+    mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+  }
+  data->shaderblock.position_loc = shaderblock.position_loc;
+  data->shaderblock.texcoord_loc = shaderblock.texcoord_loc;
+  data->shaderblock.color_loc = shaderblock.color_loc;
+  data->shaderblock.modelViewProjection_loc =
+      shaderblock.modelViewProjection_loc;
+  return mrb_obj_value(
+  Data_Wrap_Struct(mrb, class_ShaderBlock,
+                   &mrb_sdl2_gpu_shaderblock_data_type, data));
+}
+/*******************************
+ * GPU_ShaderBlock bindings ends here
  *******************************/
 
 /**************************************
@@ -1064,7 +1343,7 @@ static mrb_value
 mrb_sdl2_gpu_target_set_rgba(mrb_state *mrb, mrb_value self) {
   GPU_Target *t;
   mrb_int r, g, b, a;
-  mrb_get_args(mrb, "iii", &r, &g, &b, &a);
+  mrb_get_args(mrb, "iiii", &r, &g, &b, &a);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   GPU_SetTargetRGBA(t, r, g, b, a);
   return mrb_nil_value();
@@ -1086,6 +1365,7 @@ mrb_sdl2_gpu_target_free(mrb_state *mrb, mrb_value self) {
     GPU_FreeTarget(data->target);
     data->target = NULL;
   }
+  mrb_free(mrb, data);
   return self;
 }
 
@@ -2322,24 +2602,509 @@ mrb_sdl2_gpu_target_gradient_fill_rect(mrb_state *mrb, mrb_value self) {
 
   return self;
 }
+static mrb_value
+mrb_sdl2_gpu_target_get_rgba(mrb_state *mrb, mrb_value self) {
+  mrb_value ary;
+  GPU_Target *t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
+  ary = mrb_ary_new_capa(mrb, 4);
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(t->color.r));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(t->color.g));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(t->color.b));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(t->color.a));
+  return ary;
+}
+
+static mrb_value
+mrb_sdl2_gpu_image_get_rgba(mrb_state *mrb, mrb_value self) {
+  mrb_value ary;
+  GPU_Image *i = mrb_sdl2_gpu_image_get_ptr(mrb, self);
+  ary = mrb_ary_new_capa(mrb, 4);
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(i->color.r));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(i->color.g));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(i->color.b));
+  mrb_ary_push(mrb, ary, mrb_fixnum_value(i->color.a));
+  return ary;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_initialize(mrb_state *mrb, mrb_value self) {
+  Uint32 programid = -1;
+  mrb_value object;
+  mrb_value *objects;
+  mrb_int rest_args;
+  int const argc = mrb_get_args(mrb, "|o*", &object, &objects, &rest_args);
+  mrb_sdl2_gpu_program_data_t *data =
+    (mrb_sdl2_gpu_program_data_t*)DATA_PTR(self);
+
+  if (NULL == data) {
+    data = (mrb_sdl2_gpu_program_data_t*)
+        mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_program_data_t));
+    if (NULL == data) {
+      mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+    }
+    data->programid = 0;
+  }
+  if (0 == argc) {
+    programid = GPU_CreateShaderProgram();
+  } else if (2 == argc) {
+    Uint32 s1 = mrb_sdl2_gpu_shader_get_uint32(mrb, object),
+           s2 = mrb_sdl2_gpu_shader_get_uint32(mrb, objects[0]);
+    programid = GPU_LinkShaders(s1, s2);
+  } else {
+    int i;
+    Uint32 *p = (Uint32 *) SDL_malloc(sizeof(Uint32) * (rest_args + 1));
+    p[0] = mrb_sdl2_gpu_shader_get_uint32(mrb, object);
+    for (i = 1; i < (rest_args + 1); i++) {
+      p[1] = mrb_sdl2_gpu_shader_get_uint32(mrb, objects[i-1]);
+    }
+    programid = GPU_LinkManyShaders(p, rest_args+1);
+  }
+  if (!programid) {
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Could not initialize Shader Program");
+  }
+  data->programid = programid;
+
+  DATA_PTR(self) = data;
+  DATA_TYPE(self) = &mrb_sdl2_gpu_program_data_type;
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_free(mrb_state *mrb, mrb_value self) {
+  mrb_sdl2_gpu_program_data_t *data =
+    (mrb_sdl2_gpu_program_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_program_data_type);
+  if (NULL != data) {
+    if (0 != data->programid) {
+      GPU_FreeShaderProgram(data->programid);
+      data->programid = 0;
+    }
+    mrb_free(mrb, data);
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_shader_initialize(mrb_state *mrb, mrb_value self) {
+  Uint32 shaderid = -1;
+  mrb_value shader_source;
+  mrb_int shader_type;
+  mrb_sdl2_gpu_shader_data_t *data =
+    (mrb_sdl2_gpu_shader_data_t*)DATA_PTR(self);
+  mrb_get_args(mrb, "iS", &shader_type, &shader_source);
+
+  if (NULL == data) {
+    data = (mrb_sdl2_gpu_shader_data_t*)
+        mrb_malloc(mrb, sizeof(mrb_sdl2_gpu_shader_data_t));
+    if (NULL == data) {
+      mrb_raise(mrb, E_RUNTIME_ERROR, "insufficient memory.");
+    }
+    data->shaderid = 0;
+  }
+
+  shaderid = GPU_CompileShader(shader_type, RSTRING_PTR(shader_source));
+  if (!shaderid) {
+    mrb_raise(mrb, E_RUNTIME_ERROR,
+              "Could not initialize Shader");
+  }
+  data->shaderid = shaderid;
+
+  DATA_PTR(self) = data;
+  DATA_TYPE(self) = &mrb_sdl2_gpu_shader_data_type;
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_shader_free(mrb_state *mrb, mrb_value self) {
+  mrb_sdl2_gpu_shader_data_t *data =
+    (mrb_sdl2_gpu_shader_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_shader_data_type);
+  if (NULL != data) {
+    if (0 != data->shaderid) {
+      GPU_FreeShader(data->shaderid);
+      data->shaderid = 0;
+    }
+    mrb_free(mrb, data);
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_attach(mrb_state *mrb, mrb_value self) {
+  mrb_value shader_object;
+  mrb_get_args(mrb, "o", &shader_object);
+  GPU_AttachShader(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                   mrb_sdl2_gpu_shader_get_uint32(mrb, shader_object));
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_detach(mrb_state *mrb, mrb_value self) {
+  mrb_value shader_object;
+  mrb_get_args(mrb, "o", &shader_object);
+  GPU_DetachShader(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                   mrb_sdl2_gpu_shader_get_uint32(mrb, shader_object));
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_link(mrb_state *mrb, mrb_value self) {
+  GPU_LinkShaderProgram(mrb_sdl2_gpu_program_get_uint32(mrb, self));
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_get_current_shader_program(mrb_state *mrb, mrb_value self) {
+  return mrb_fixnum_value(GPU_GetCurrentShaderProgram());
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_is_default(mrb_state *mrb, mrb_value self) {
+  Uint32 program_uint = mrb_sdl2_gpu_program_get_uint32(mrb, self);
+  return 0 == GPU_IsDefaultShaderProgram(program_uint) ?
+      mrb_false_value() : mrb_false_value();
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_activate(mrb_state *mrb, mrb_value self) {
+  mrb_value block;
+  GPU_ShaderBlock *shaderblock = NULL;
+  int argc = mrb_get_args(mrb, "|o", &block);
+  if (1 == argc)
+    shaderblock = mrb_sdl2_gpu_shaderblock_get_ptr(mrb, block);
+  GPU_ActivateShaderProgram(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                            shaderblock);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_deactivate(mrb_state *mrb, mrb_value self) {
+  GPU_DeactivateShaderProgram();
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_shader_get_msg(mrb_state *mrb, mrb_value self) {
+  const char * msg = GPU_GetShaderMessage();
+  if (NULL == msg)
+    msg = "";
+  return mrb_str_new_cstr(mrb, msg);
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_get_arg_location(mrb_state *mrb, mrb_value self) {
+  mrb_value attribute_name;
+  mrb_get_args(mrb, "S", &attribute_name);
+  return mrb_fixnum_value(
+      GPU_GetAttributeLocation(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                               RSTRING_PTR(attribute_name)));
+}
+
+static mrb_value
+mrb_sdl2_gpu_attributeformat_initialize(mrb_state *mrb, mrb_value self) {
+  mrb_int num_elements_per_vertex, stride_bytes, offset_bytes, type;
+  mrb_bool normalized;
+  mrb_get_args(mrb, "iibii", &num_elements_per_vertex, &type, &normalized,
+                             &stride_bytes, &offset_bytes);
+  return mrb_sdl2_gpu_attributeformat(mrb,
+                                      GPU_MakeAttributeFormat(
+                                          num_elements_per_vertex,
+                                          type,
+                                          normalized,
+                                          stride_bytes,
+                                          offset_bytes));
+}
+
+static mrb_value
+mrb_sdl2_gpu_attributeformat_free(mrb_state *mrb, mrb_value self) {
+  mrb_sdl2_gpu_attributeformat_data_t *data =
+    (mrb_sdl2_gpu_attributeformat_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_attributeformat_data_type);
+  if (NULL != data) {
+    mrb_free(mrb, data);
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_attribute_initialize(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_value values, format;
+  mrb_get_args(mrb, "iAo", &location, &values, &format);
+  mrb_raise(mrb, E_NOTIMP_ERROR, "not implemented.");
+}
+
+static mrb_value
+mrb_sdl2_gpu_attribute_free(mrb_state *mrb, mrb_value self) {
+  mrb_sdl2_gpu_attribute_data_t *data =
+    (mrb_sdl2_gpu_attribute_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_attribute_data_type);
+  if (NULL != data) {
+    if (NULL != data->attribute) {
+      mrb_free(mrb, data->attribute);
+    }
+    mrb_free(mrb, data);
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_get_uni_location(mrb_state *mrb, mrb_value self) {
+  mrb_value uniform_name;
+  mrb_get_args(mrb, "S", &uniform_name);
+  return mrb_fixnum_value(
+      GPU_GetUniformLocation(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                             RSTRING_PTR(uniform_name)));
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_load_shader_block(mrb_state *mrb, mrb_value self) {
+  mrb_value position_name, texcoord_name, color_name, modelViewMatrix_name;
+  mrb_get_args(mrb, "SSSS", &position_name, &texcoord_name,
+                            &color_name, &modelViewMatrix_name);
+  return mrb_sdl2_gpu_shaderblock(mrb,
+                                  GPU_LoadShaderBlock(
+                                      mrb_sdl2_gpu_program_get_uint32(mrb,
+                                                                      self),
+                                      RSTRING_PTR(position_name),
+                                      RSTRING_PTR(texcoord_name),
+                                      RSTRING_PTR(color_name),
+                                      RSTRING_PTR(modelViewMatrix_name)));
+}
+
+static mrb_value
+mrb_sdl2_gpu_shaderblock_free(mrb_state *mrb, mrb_value self) {
+  mrb_sdl2_gpu_shaderblock_data_t *data =
+    (mrb_sdl2_gpu_shaderblock_data_t*)
+      mrb_data_get_ptr(mrb, self, &mrb_sdl2_gpu_shaderblock_data_type);
+  if (NULL != data) {
+    mrb_free(mrb, data);
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_shaderblock_set(mrb_state *mrb, mrb_value self) {
+  GPU_SetShaderBlock(*mrb_sdl2_gpu_shaderblock_get_ptr(mrb, self));
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_image_set(mrb_state *mrb, mrb_value self) {
+  mrb_int location, image_unit;
+  mrb_get_args(mrb, "ii", &location, &image_unit);
+  GPU_SetShaderImage(mrb_sdl2_gpu_image_get_ptr(mrb, self),
+                     location, image_unit);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_get_uniformuiv(mrb_state *mrb, mrb_value self) {
+  mrb_int location, arguments_num;
+  unsigned int *values;
+  int i;
+  mrb_value ary;
+  mrb_get_args(mrb, "ii", &location, &arguments_num);
+  values = (unsigned int *) SDL_malloc(sizeof(unsigned int *) * arguments_num);
+  GPU_GetUniformuiv(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                    location,
+                    values);
+  ary = mrb_ary_new_capa(mrb, arguments_num);
+  for (i = 0; i < arguments_num; i++) {
+    mrb_ary_push(mrb, ary, mrb_fixnum_value(values[i]));
+  }
+  return ary;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_uniformui(mrb_state *mrb, mrb_value self) {
+  mrb_int location, value;
+  mrb_get_args(mrb, "ii", &location, &value);
+  GPU_SetUniformui(location, value);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_uniformuiv(mrb_state *mrb, mrb_value self) {
+  mrb_int location, num_elements_per_value, num_values;
+  mrb_value values;
+  unsigned int * values_c;
+  int i;
+  mrb_get_args(mrb, "iiiA", &location, &num_elements_per_value,
+                                       &num_values, &values);
+  values_c = (unsigned int *) SDL_malloc(sizeof(unsigned int) *
+                                         num_values           *
+                                         num_elements_per_value);
+  for (i = 0; i < num_values; i++) {
+    values_c[i] = mrb_fixnum(mrb_ary_ref(mrb, values, i));
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_get_uniformfv(mrb_state *mrb, mrb_value self) {
+  mrb_int location, number_of_values;
+  mrb_value ary;
+  int i;
+  float *values;
+  mrb_get_args(mrb, "ii", &location, &number_of_values);
+  values = (float *) SDL_malloc(sizeof(float) * number_of_values);
+  ary = mrb_ary_new_capa(mrb, number_of_values);
+  GPU_GetUniformfv(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                   location, values);
+  for (i = 0; i < number_of_values; i++) {
+    mrb_ary_push(mrb, ary, mrb_float_value(mrb, values[i]));
+  }
+  return ary;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_uniformf(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_float value;
+  mrb_get_args(mrb, "if", &location, &value);
+  GPU_SetUniformf(location, value);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_uniformfv(mrb_state *mrb, mrb_value self) {
+  mrb_int location, num_elements_per_value, num_values;
+  mrb_value values;
+  float * values_c;
+  int i;
+  mrb_get_args(mrb, "iiiA", &location, &num_elements_per_value,
+                            &num_values, &values);
+  values_c = (float *) SDL_malloc(sizeof(float) *
+                                  num_values           *
+                                  num_elements_per_value);
+  for (i = 0; i < num_values; i++) {
+    values_c[i] = mrb_float(mrb_ary_ref(mrb, values, i));
+  }
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_program_get_umfv(mrb_state *mrb, mrb_value self) {
+  mrb_int location, number_of_values;
+  mrb_value ary;
+  int i;
+  float *values;
+  mrb_get_args(mrb, "ii", &location, &number_of_values);
+  values = (float *) SDL_malloc(sizeof(float) * number_of_values);
+  ary = mrb_ary_new_capa(mrb, number_of_values);
+  GPU_GetUniformMatrixfv(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                         location, values);
+  for (i = 0; i < number_of_values; i++) {
+    mrb_ary_push(mrb, ary, mrb_float_value(mrb, values[i]));
+  }
+  return ary;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_umfv(mrb_state *mrb, mrb_value self) {
+  mrb_raise(mrb, E_NOTIMP_ERROR, "not implemented");
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributef(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_float value;
+  mrb_get_args(mrb, "if", &location, &value);
+  GPU_SetAttributef(location, value);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributei(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_int value;
+  mrb_get_args(mrb, "if", &location, &value);
+  GPU_SetAttributei(location, value);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributeui(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_int value;
+  mrb_get_args(mrb, "if", &location, &value);
+  GPU_SetAttributeui(location, value);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributefv(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_value values;
+  float *values_c;
+  int size, i;
+  mrb_get_args(mrb, "iA", &location, &values);
+  size = mrb_ary_len(mrb, values);
+  values_c = (float *) SDL_malloc(sizeof(float) * size);
+  for (i = 0; i < size; i++) {
+    values_c[i] = mrb_float(mrb_ary_ref(mrb, values, i));
+  }
+  GPU_SetAttributefv(location, size, values_c);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributeiv(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_value values;
+  int *values_c;
+  int size, i;
+  mrb_get_args(mrb, "iA", &location, &values);
+  size = mrb_ary_len(mrb, values);
+  values_c = (int *) SDL_malloc(sizeof(int) * size);
+  for (i = 0; i < size; i++) {
+    values_c[i] = mrb_float(mrb_ary_ref(mrb, values, i));
+  }
+  GPU_SetAttributeiv(location, size, values_c);
+  return self;
+}
+
+static mrb_value
+mrb_sdl2_gpu_set_attributeuiv(mrb_state *mrb, mrb_value self) {
+  mrb_int location;
+  mrb_value values;
+  unsigned int *values_c;
+  int size, i;
+  mrb_get_args(mrb, "iA", &location, &values);
+  size = mrb_ary_len(mrb, values);
+  values_c = (unsigned int *) SDL_malloc(sizeof(unsigned int) * size);
+  for (i = 0; i < size; i++) {
+    values_c[i] = mrb_float(mrb_ary_ref(mrb, values, i));
+  }
+  GPU_SetAttributeuiv(location, size, values_c);
+  return self;
+}
 
 
 void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   struct RClass *class_Surface;
   struct RClass *mod_Video;
   int arena_size;
-  mod_GPU           = mrb_define_module     (mrb,            "GPU");
-  mod_Video         = mrb_module_get_under  (mrb, mod_SDL2,  "Video");
-  class_Surface     = mrb_class_get_under   (mrb, mod_Video, "Surface");
-  class_Target      = mrb_define_class_under(mrb, mod_GPU,   "Target",      mrb->object_class);
-  class_RendererID  = mrb_define_class_under(mrb, mod_GPU,   "RendererID",  mrb->object_class);
-  class_Renderer    = mrb_define_class_under(mrb, mod_GPU,   "Renderer",    mrb->object_class);
-  class_Context     = mrb_define_class_under(mrb, mod_GPU,   "Context",     mrb->object_class);
-  class_Camera      = mrb_define_class_under(mrb, mod_GPU,   "Camera",      mrb->object_class);
-  class_BlendMode   = mrb_define_class_under(mrb, mod_GPU,   "BlendMode",   mrb->object_class);
-  class_Rect        = mrb_define_class_under(mrb, mod_GPU,   "Rect",        mrb->object_class);
-  class_Image       = mrb_define_class_under(mrb, mod_GPU,   "Image",       mrb->object_class);
-  class_MatrixStack = mrb_define_class_under(mrb, mod_GPU,   "MatrixStack", mrb->object_class);
+
+  mod_GPU               = mrb_define_module     (mrb,            "GPU");
+  mod_Video             = mrb_module_get_under  (mrb, mod_SDL2,  "Video");
+  class_Surface         = mrb_class_get_under   (mrb, mod_Video, "Surface");
+  class_Target          = mrb_define_class_under(mrb, mod_GPU,   "Target",          mrb->object_class);
+  class_RendererID      = mrb_define_class_under(mrb, mod_GPU,   "RendererID",      mrb->object_class);
+  class_Renderer        = mrb_define_class_under(mrb, mod_GPU,   "Renderer",        mrb->object_class);
+  class_Context         = mrb_define_class_under(mrb, mod_GPU,   "Context",         mrb->object_class);
+  class_Camera          = mrb_define_class_under(mrb, mod_GPU,   "Camera",          mrb->object_class);
+  class_BlendMode       = mrb_define_class_under(mrb, mod_GPU,   "BlendMode",       mrb->object_class);
+  class_Rect            = mrb_define_class_under(mrb, mod_GPU,   "Rect",            mrb->object_class);
+  class_Image           = mrb_define_class_under(mrb, mod_GPU,   "Image",           mrb->object_class);
+  class_MatrixStack     = mrb_define_class_under(mrb, mod_GPU,   "MatrixStack",     mrb->object_class);
+  class_Shader          = mrb_define_class_under(mrb, mod_GPU,   "Shader",          mrb->object_class);
+  class_Program         = mrb_define_class_under(mrb, mod_GPU,   "Program",         mrb->object_class);
+  class_ShaderBlock     = mrb_define_class_under(mrb, mod_GPU,   "ShaderBlock",     mrb->object_class);
+  class_Attribute       = mrb_define_class_under(mrb, mod_GPU,   "Attribute",       mrb->object_class);
+  class_AttributeFormat = mrb_define_class_under(mrb, mod_GPU,   "AttributeFormat", mrb->object_class);
 
   MRB_SET_INSTANCE_TT(class_Rect,        MRB_TT_DATA);
   MRB_SET_INSTANCE_TT(class_Surface,     MRB_TT_DATA);
@@ -2350,6 +3115,9 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   MRB_SET_INSTANCE_TT(class_BlendMode,   MRB_TT_DATA);
   MRB_SET_INSTANCE_TT(class_Image,       MRB_TT_DATA);
   MRB_SET_INSTANCE_TT(class_MatrixStack, MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Shader,      MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_Program,     MRB_TT_DATA);
+  MRB_SET_INSTANCE_TT(class_ShaderBlock, MRB_TT_DATA);
 
   /**************************************************************************
    * Initialization 
@@ -2388,7 +3156,6 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_module_function(mrb, mod_GPU, "renderer_id",              mrb_sdl2_gpu_get_renderer_id,              MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, mod_GPU, "renderer_by_index",        mrb_sdl2_gpu_get_renderer_index,           MRB_ARGS_REQ(1));
   mrb_define_module_function(mrb, mod_GPU, "num_registered_renderers", mrb_sdl2_gpu_get_num_registered_renderers, MRB_ARGS_NONE());
-
 
   /***************************************************************************
    * Renderer Control
@@ -2454,6 +3221,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Target, "unset_clip",    mrb_sdl2_gpu_target_unset_clip,    MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Target, "set_rgb",       mrb_sdl2_gpu_target_set_rgb,       MRB_ARGS_REQ(3));
   mrb_define_method(mrb, class_Target, "set_rgba",      mrb_sdl2_gpu_target_set_rgba,      MRB_ARGS_REQ(4));
+  mrb_define_method(mrb, class_Target, "get_rgba",      mrb_sdl2_gpu_target_get_rgba,      MRB_ARGS_REQ(4));
   mrb_define_method(mrb, class_Target, "unset_color",   mrb_sdl2_gpu_target_unset_color,   MRB_ARGS_NONE());
 
   /***************************************************************************
@@ -2469,6 +3237,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Image, "generate_mipmaps",   mrb_sdl2_gpu_image_generate_mipmaps,   MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "set_rgb",            mrb_sdl2_gpu_image_set_rgb,            MRB_ARGS_REQ(3));
   mrb_define_method(mrb, class_Image, "set_rgba",           mrb_sdl2_gpu_image_set_rgba,           MRB_ARGS_REQ(4));
+  mrb_define_method(mrb, class_Image, "get_rgba",           mrb_sdl2_gpu_image_get_rgba,           MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "unset_color",        mrb_sdl2_gpu_image_unset_color,        MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "blending",           mrb_sdl2_gpu_image_get_blending,       MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Image, "blending=",          mrb_sdl2_gpu_image_set_blending,       MRB_ARGS_REQ(1));
@@ -2525,8 +3294,56 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Target, "rect_round",         mrb_sdl2_gpu_target_rect_round,         MRB_ARGS_REQ(6) | MRB_ARGS_OPT(3));
   mrb_define_method(mrb, class_Target, "rect_round_filled",  mrb_sdl2_gpu_target_rect_round_filled,  MRB_ARGS_REQ(6) | MRB_ARGS_OPT(3));
   mrb_define_method(mrb, class_Target, "gradient_fill_rect", mrb_sdl2_gpu_target_gradient_fill_rect, MRB_ARGS_REQ(10));
-
   // TBD - GPU_Polygon - array of floats involved
+
+  /**************************************************************************
+   * ShaderInterface
+   *
+   *************************************************************************/
+  mrb_define_module_function(mrb, mod_GPU, "get_current_shader_program", mrb_sdl2_gpu_get_current_shader_program, MRB_ARGS_NONE());
+
+  mrb_define_module_function(mrb, class_Program, "deactivate", mrb_sdl2_gpu_program_deactivate, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "initialize",             mrb_sdl2_gpu_program_initialize,        MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "free",                   mrb_sdl2_gpu_program_free,              MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "attach_shader",          mrb_sdl2_gpu_program_attach,            MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "detach_shader",          mrb_sdl2_gpu_program_detach,            MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "link",                   mrb_sdl2_gpu_program_link,              MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "is_default?",            mrb_sdl2_gpu_program_is_default,        MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "activate",               mrb_sdl2_gpu_program_activate,          MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "get_attribute_location", mrb_sdl2_gpu_program_get_arg_location,  MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "get_uniform_location",   mrb_sdl2_gpu_program_get_uni_location,  MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "load_shader_block",      mrb_sdl2_gpu_program_load_shader_block, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "get_uniformuiv",         mrb_sdl2_gpu_program_get_uniformuiv,    MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "get_uniformfv",          mrb_sdl2_gpu_program_get_uniformfv,     MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Program, "get_uniform_matrix_fv",  mrb_sdl2_gpu_program_get_umfv,          MRB_ARGS_NONE());
+  
+  mrb_define_module_function(mrb, mod_GPU, "set_uniformui",         mrb_sdl2_gpu_set_uniformui,    MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_uniformuiv",        mrb_sdl2_gpu_set_uniformuiv,   MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_uniformf",          mrb_sdl2_gpu_set_uniformf,     MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_uniformfv",         mrb_sdl2_gpu_set_uniformfv,    MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_uniform_matrix_fv", mrb_sdl2_gpu_set_umfv,         MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributef",        mrb_sdl2_gpu_set_attributef,   MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributei",        mrb_sdl2_gpu_set_attributei,   MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributeui",       mrb_sdl2_gpu_set_attributeui,  MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributefv",       mrb_sdl2_gpu_set_attributefv,  MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributefv",       mrb_sdl2_gpu_set_attributeiv,  MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, mod_GPU, "set_attributefv",       mrb_sdl2_gpu_set_attributeuiv, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, class_Shader, "initialize", mrb_sdl2_gpu_shader_initialize, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Shader, "free",       mrb_sdl2_gpu_shader_free,       MRB_ARGS_NONE());
+  mrb_define_module_function(mrb, class_Shader, "get_message", mrb_sdl2_gpu_shader_get_msg, MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, class_ShaderBlock, "free",       mrb_sdl2_gpu_shaderblock_free,       MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_ShaderBlock, "set",       mrb_sdl2_gpu_shaderblock_set,       MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, class_AttributeFormat, "initialize", mrb_sdl2_gpu_attributeformat_initialize, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_AttributeFormat, "free",       mrb_sdl2_gpu_attributeformat_free,       MRB_ARGS_NONE());
+
+  mrb_define_method(mrb, class_Attribute, "initialize", mrb_sdl2_gpu_attribute_initialize, MRB_ARGS_NONE());
+  mrb_define_method(mrb, class_Attribute, "free",       mrb_sdl2_gpu_attribute_free,       MRB_ARGS_NONE());
+  
+  mrb_define_method(mrb, class_Image, "set", mrb_sdl2_gpu_image_set,       MRB_ARGS_NONE());
+
 
   /***************************************************************************
    * Additionals access to
