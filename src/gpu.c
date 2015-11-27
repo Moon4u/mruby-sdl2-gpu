@@ -1707,6 +1707,7 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self) {
     t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
     i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
     r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
+    printf("rx%f ry%f rw%f rh%f x%f y%f %f %f\n", r->x, r->y, r->w, r->h, x, y, scale_x, scale_y);
     GPU_BlitScale(i, r, t, x, y, scale_x, scale_y);
   } else if (7 == mrb->c->ci->argc) {
     mrb_float degrees, scale_x, scale_y;
@@ -2119,8 +2120,8 @@ mrb_sdl2_gpu_blendmode_set_alpha_equation(mrb_state *mrb, mrb_value self) {
 
 static mrb_value
 mrb_sdl2_gpu_rect_init(mrb_state *mrb, mrb_value self) {
-  mrb_int x, y, w, h;
-  int const argc = mrb_get_args(mrb, "|iiii", &x, &y, &w, &h);
+  mrb_float x, y, w, h;
+  int const argc = mrb_get_args(mrb, "|ffff", &x, &y, &w, &h);
   mrb_sdl2_gpu_rect_data_t *data =
     (mrb_sdl2_gpu_rect_data_t*)DATA_PTR(self);
   if (data == NULL) {
@@ -2464,10 +2465,13 @@ mrb_sdl2_gpu_target_rect_filled2(mrb_state *mrb, mrb_value self) {
   mrb_get_args(mrb, "oiiii", &rect, &r, &g, &b, &a);
   t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
   re = mrb_sdl2_gpu_rect_get_ptr(mrb, rect);
+  
   if (NULL == t)
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Target's ptr");
+
   if (NULL == re)
     mrb_raise(mrb, E_RUNTIME_ERROR, "Could not get the Rect's ptr");
+
   GPU_RectangleFilled2(t, *re, (SDL_Color) {r, g, b, a});
   return self;
 }
@@ -2852,10 +2856,17 @@ mrb_sdl2_gpu_attribute_free(mrb_state *mrb, mrb_value self) {
 static mrb_value
 mrb_sdl2_gpu_program_get_uni_location(mrb_state *mrb, mrb_value self) {
   mrb_value uniform_name;
+  int result;
   mrb_get_args(mrb, "S", &uniform_name);
-  return mrb_fixnum_value(
-      GPU_GetUniformLocation(mrb_sdl2_gpu_program_get_uint32(mrb, self),
-                             RSTRING_PTR(uniform_name)));
+  result = GPU_GetUniformLocation(mrb_sdl2_gpu_program_get_uint32(mrb, self),
+                                  RSTRING_PTR(uniform_name));
+  if (-1 == result) {
+    const char *c = GPU_GetShaderMessage();
+    if (NULL == c)
+      c = "";
+    mrb_raisef(mrb, E_RUNTIME_ERROR,  c);
+  }
+  return mrb_fixnum_value(result);
 }
 
 static mrb_value
@@ -3090,6 +3101,93 @@ mrb_sdl2_gpu_set_attributeuiv(mrb_state *mrb, mrb_value self) {
   return self;
 }
 
+float *get_floats(mrb_state *mrb, mrb_value self) {
+  float * result = NULL;
+  mrb_value f;
+  int size = 1, i, j, k;
+
+  f = self;
+  while (mrb_array_p(f)) {
+    size *= mrb_ary_len(mrb, f);
+    f = mrb_ary_ref(mrb, self, 0);
+  }
+
+  result = (float *) SDL_malloc(sizeof(float) * size);
+  i = 0;
+  f = self;
+  if (mrb_array_p(mrb_ary_ref(mrb, self, 0))) {
+    for (j = 0; j < mrb_ary_len(mrb, f); j++) {
+      int k_max = mrb_ary_len(mrb, mrb_ary_ref(mrb, self, 0));
+      mrb_value j_value = mrb_ary_ref(mrb, self, j);
+      for (k = 0; k < k_max; k++)
+        result[i++] = mrb_float(mrb_ary_ref(mrb, j_value, k));
+    }
+  } else {
+    for (j = 0; j < mrb_ary_len(mrb, f); j++) {
+      result[i++] = mrb_float(mrb_ary_ref(mrb, self, j));
+    }
+  }
+  return result;
+}
+
+unsigned short *get_uint(mrb_state *mrb, mrb_value self) {
+  unsigned short * result = NULL;
+  mrb_value f;
+  int size = 1, i, j, k;
+
+  f = self;
+  while (mrb_array_p(f)) {
+    size *= mrb_ary_len(mrb, f);
+    f = mrb_ary_ref(mrb, self, 0);
+  }
+
+  result = (unsigned short *) SDL_malloc(sizeof(unsigned short) * size);
+  i = 0;
+  if (mrb_array_p(mrb_ary_ref(mrb, self, 0))) {
+    for (j = 0; j < mrb_ary_len(mrb, self); j++) {
+      int k_max = mrb_ary_len(mrb, mrb_ary_ref(mrb, self, 0));
+      mrb_value j_value = mrb_ary_ref(mrb, self, j);
+      for (k = 0; k < k_max; k++)
+        result[i++] = mrb_int(mrb, mrb_ary_ref(mrb, j_value, k));
+    }
+  } else {
+    for (j = 0; j < mrb_ary_len(mrb, self); j++) {
+      result[i++] = mrb_int(mrb, mrb_ary_ref(mrb, self, j));
+    }
+  }
+  return result;
+}
+
+static mrb_value
+mrb_sdl2_gpu_target_blit_batch(mrb_state *mrb, mrb_value self) {
+  mrb_value image, indices, values;
+  mrb_int batch_flags;
+  GPU_Image *image_c = NULL;
+  float *values_c;
+  unsigned short *indices_c = NULL;
+  int i = 0;
+  mrb_get_args(mrb, "oAAi", &image, &values, &indices, &batch_flags);
+
+  image_c = mrb_sdl2_gpu_image_get_ptr(mrb, image);
+
+  if (batch_flags & GPU_BATCH_XYZ) i+=3;
+  else if (batch_flags & GPU_BATCH_XY) i+=2;
+  if (batch_flags & GPU_BATCH_ST) i+=2;
+  if (batch_flags & GPU_BATCH_RGBA) i+=4;
+  else if (batch_flags & GPU_BATCH_RGB) i+=3;
+
+  values_c = get_floats(mrb, values);
+  indices_c = get_uint(mrb, indices);
+
+  GPU_TriangleBatch(image_c, mrb_sdl2_gpu_target_get_ptr(mrb, self),
+                    mrb_ary_len(mrb, values), values_c,
+                    mrb_ary_len(mrb, indices), indices_c, batch_flags);
+
+  SDL_free(values_c);
+  SDL_free(indices_c);
+
+  return self;
+}
 
 void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   struct RClass *class_Surface;
@@ -3285,6 +3383,7 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_method(mrb, class_Target, "clear_rgba",         mrb_sdl2_gpu_target_clear_rgba,         MRB_ARGS_REQ(4));
   mrb_define_method(mrb, class_Target, "flip",               mrb_sdl2_gpu_target_flip,               MRB_ARGS_NONE());
   mrb_define_method(mrb, class_Target, "blit",               mrb_sdl2_gpu_target_blit,               MRB_ARGS_REQ(4) | MRB_ARGS_OPT(3));
+  mrb_define_method(mrb, class_Target, "blit_batch",         mrb_sdl2_gpu_target_blit_batch,         MRB_ARGS_REQ(4));
   mrb_define_method(mrb, class_Target, "pixel",              mrb_sdl2_gpu_target_pixel,              MRB_ARGS_REQ(6));
   mrb_define_method(mrb, class_Target, "line",               mrb_sdl2_gpu_target_line,               MRB_ARGS_REQ(8));
   mrb_define_method(mrb, class_Target, "arc",                mrb_sdl2_gpu_target_arc,                MRB_ARGS_REQ(9));
