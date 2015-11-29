@@ -1707,7 +1707,6 @@ mrb_sdl2_gpu_target_blit(mrb_state *mrb, mrb_value self) {
     t = mrb_sdl2_gpu_target_get_ptr(mrb, self);
     i = mrb_sdl2_gpu_image_get_ptr(mrb, src_image);
     r = mrb_sdl2_gpu_rect_get_ptr(mrb, src_rect);
-    printf("rx%f ry%f rw%f rh%f x%f y%f %f %f\n", r->x, r->y, r->w, r->h, x, y, scale_x, scale_y);
     GPU_BlitScale(i, r, t, x, y, scale_x, scale_y);
   } else if (7 == mrb->c->ci->argc) {
     mrb_float degrees, scale_x, scale_y;
@@ -3104,26 +3103,27 @@ mrb_sdl2_gpu_set_attributeuiv(mrb_state *mrb, mrb_value self) {
 float *get_floats(mrb_state *mrb, mrb_value self) {
   float * result = NULL;
   mrb_value f;
-  int size = 1, i, j, k;
+  int size, i, j, k;
 
-  f = self;
-  while (mrb_array_p(f)) {
-    size *= mrb_ary_len(mrb, f);
-    f = mrb_ary_ref(mrb, self, 0);
-  }
+  if (MRB_TT_ARRAY != self.tt)
+    return NULL;
+
+  size = RARRAY_LEN(self);  // mrb_ary_len(mrb, self);
+  if (mrb_ary_ref(mrb, self, 0).tt == MRB_TT_ARRAY)
+    size *= RARRAY_LEN(mrb_ary_ref(mrb, self, 0));
 
   result = (float *) SDL_malloc(sizeof(float) * size);
   i = 0;
   f = self;
   if (mrb_array_p(mrb_ary_ref(mrb, self, 0))) {
-    for (j = 0; j < mrb_ary_len(mrb, f); j++) {
-      int k_max = mrb_ary_len(mrb, mrb_ary_ref(mrb, self, 0));
+    for (j = 0; j < RARRAY_LEN(f); j++) {
+      int k_max = RARRAY_LEN(mrb_ary_ref(mrb, self, 0));
       mrb_value j_value = mrb_ary_ref(mrb, self, j);
       for (k = 0; k < k_max; k++)
         result[i++] = mrb_float(mrb_ary_ref(mrb, j_value, k));
     }
   } else {
-    for (j = 0; j < mrb_ary_len(mrb, f); j++) {
+    for (j = 0; j < RARRAY_LEN(f); j++) {
       result[i++] = mrb_float(mrb_ary_ref(mrb, self, j));
     }
   }
@@ -3134,6 +3134,9 @@ unsigned short *get_uint(mrb_state *mrb, mrb_value self) {
   unsigned short * result = NULL;
   mrb_value f;
   int size = 1, i, j, k;
+
+  if (MRB_TT_ARRAY != self.tt)
+    return NULL;
 
   f = self;
   while (mrb_array_p(f)) {
@@ -3165,8 +3168,8 @@ mrb_sdl2_gpu_target_blit_batch(mrb_state *mrb, mrb_value self) {
   GPU_Image *image_c = NULL;
   float *values_c;
   unsigned short *indices_c = NULL;
-  int i = 0;
-  mrb_get_args(mrb, "oAAi", &image, &values, &indices, &batch_flags);
+  int i = 0, j;
+  mrb_get_args(mrb, "oAA!i", &image, &values, &indices, &batch_flags);
 
   image_c = mrb_sdl2_gpu_image_get_ptr(mrb, image);
 
@@ -3179,9 +3182,12 @@ mrb_sdl2_gpu_target_blit_batch(mrb_state *mrb, mrb_value self) {
   values_c = get_floats(mrb, values);
   indices_c = get_uint(mrb, indices);
 
+  j = mrb_ary_len(mrb, values) * mrb_ary_len(mrb, mrb_ary_ref(mrb, values, 0));
+
   GPU_TriangleBatch(image_c, mrb_sdl2_gpu_target_get_ptr(mrb, self),
                     mrb_ary_len(mrb, values), values_c,
-                    mrb_ary_len(mrb, indices), indices_c, batch_flags);
+                    mrb_array_p(indices) ? mrb_ary_len(mrb, indices) : 0,
+                    indices_c, batch_flags);
 
   SDL_free(values_c);
   SDL_free(indices_c);
@@ -3602,6 +3608,22 @@ void mrb_mruby_sdl2_gpu_gem_init(mrb_state *mrb) {
   mrb_define_const(mrb, mod_GPU, "GPU_FILTER_NEAREST",       mrb_fixnum_value(GPU_FILTER_NEAREST));
   mrb_define_const(mrb, mod_GPU, "GPU_FILTER_LINEAR",        mrb_fixnum_value(GPU_FILTER_LINEAR));
   mrb_define_const(mrb, mod_GPU, "GPU_FILTER_LINEAR_MIPMAP", mrb_fixnum_value(GPU_FILTER_LINEAR_MIPMAP));
+  mrb_gc_arena_restore(mrb, arena_size);
+
+  arena_size = mrb_gc_arena_save(mrb);
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XY",          mrb_fixnum_value(GPU_BATCH_XY));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XYZ",         mrb_fixnum_value(GPU_BATCH_XYZ));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_ST",          mrb_fixnum_value(GPU_BATCH_ST));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_RGB",         mrb_fixnum_value(GPU_BATCH_RGB));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_RGBA",        mrb_fixnum_value(GPU_BATCH_RGBA));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XY_ST",       mrb_fixnum_value(GPU_BATCH_XY_ST));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XYZ_ST",      mrb_fixnum_value(GPU_BATCH_XYZ_ST));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XY_RGB",      mrb_fixnum_value(GPU_BATCH_XY_RGB));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XYZ_RGB",     mrb_fixnum_value(GPU_BATCH_XYZ_RGB));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XY_RGBA",     mrb_fixnum_value(GPU_BATCH_XY_RGBA));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XYZ_RGBA",    mrb_fixnum_value(GPU_BATCH_XYZ_RGBA));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XY_ST_RGBA",  mrb_fixnum_value(GPU_BATCH_XY_ST_RGBA));
+  mrb_define_const(mrb, mod_GPU, "GPU_BATCH_XYZ_ST_RGBA", mrb_fixnum_value(GPU_BATCH_XYZ_ST_RGBA));
   mrb_gc_arena_restore(mrb, arena_size);
 
   arena_size = mrb_gc_arena_save(mrb);
