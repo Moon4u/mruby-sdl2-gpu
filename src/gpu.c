@@ -1466,13 +1466,9 @@ mrb_sdl2_gpu_image_create_alias(mrb_state *mrb, mrb_value self) {
 
 static mrb_value
 mrb_sdl2_gpu_image_copy(mrb_state *mrb, mrb_value self) {
-  mrb_value image;
   GPU_Image *i;
-  GPU_Image *alias;
-  mrb_get_args(mrb, "o", &image);
-  i = mrb_sdl2_gpu_image_get_ptr(mrb, image);
-  alias = GPU_CopyImage(i);
-  return mrb_sdl2_gpu_image(mrb, alias);
+  i = mrb_sdl2_gpu_image_get_ptr(mrb, self);
+  return mrb_sdl2_gpu_image(mrb, GPU_CopyImage(i));
 }
 
 static mrb_value
